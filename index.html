@@ -431,16 +431,18 @@ Regeln:
 Ideen:
 ${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""}`).join("\n")}
 
-Rufe das Tool "${TOOL.name}" mit genau einer Bewertung pro Idee auf.`;
+Rufe unbedingt das Tool "${TOOL.name}" mit genau einer Bewertung pro Idee auf. Antworte nicht mit Fließtext.`;
 }
 
-async function callClaude(ideas, key, model, withTemperature = true) {
+async function callClaude(ideas, key, model, opts = { temperature: true, forceTool: true }) {
   const body = {
-    model, max_tokens: 8000,
-    tools: [TOOL], tool_choice: { type: "tool", name: TOOL.name },
+    model, max_tokens: 16000,
+    tools: [TOOL],
+    // Erzwungener Tool-Aufruf ist am zuverlässigsten; manche Modelle erlauben nur "auto"
+    tool_choice: opts.forceTool ? { type: "tool", name: TOOL.name } : { type: "auto" },
     messages: [{ role: "user", content: buildPrompt(ideas) }]
   };
-  if (withTemperature) body.temperature = 0;   // möglichst reproduzierbare Ergebnisse
+  if (opts.temperature) body.temperature = 0;   // möglichst reproduzierbare Ergebnisse
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -454,13 +456,24 @@ async function callClaude(ideas, key, model, withTemperature = true) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data?.error?.message || res.statusText;
-    // Manche Modelle akzeptieren keinen temperature-Parameter -> einmal ohne versuchen
-    if (withTemperature && res.status === 400 && /temperature/i.test(msg)) return callClaude(ideas, key, model, false);
+    // Nicht jedes Modell unterstützt jeden Parameter -> den betroffenen Parameter weglassen und erneut versuchen
+    if (res.status === 400 && opts.forceTool && /tool_choice/i.test(msg)) return callClaude(ideas, key, model, { ...opts, forceTool: false });
+    if (res.status === 400 && opts.temperature && /temperature/i.test(msg)) return callClaude(ideas, key, model, { ...opts, temperature: false });
     const err = new Error(msg); err.status = res.status; throw err;
   }
-  const tool = (data.content || []).find((c) => c.type === "tool_use");
-  if (!tool || !Array.isArray(tool.input?.bewertungen)) throw new Error("Die KI hat keine gültige Bewertung geliefert.");
-  return tool.input.bewertungen;
+  const tool = (data.content || []).find((c) => c.type === "tool_use" && c.name === TOOL.name);
+  if (tool && Array.isArray(tool.input?.bewertungen)) return tool.input.bewertungen;
+  // Fallback: Modell hat das Tool nicht aufgerufen, aber JSON als Text geliefert
+  const text = (data.content || []).filter((c) => c.type === "text").map((c) => c.text).join("\n");
+  const parsed = extractJson(text);
+  if (parsed && Array.isArray(parsed.bewertungen)) return parsed.bewertungen;
+  throw new Error("Die KI hat keine gültige Bewertung geliefert.");
+}
+
+function extractJson(text) {
+  const a = text.indexOf("{"), b = text.lastIndexOf("}");
+  if (a < 0 || b <= a) return null;
+  try { return JSON.parse(text.slice(a, b + 1)); } catch (e) { return null; }
 }
 
 async function callOpenAI(ideas, key, model, withTemperature = true) {
