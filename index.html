@@ -180,8 +180,8 @@
       <div id="providerBox">
         <label for="provider">KI-Anbieter</label>
         <select id="provider">
-          <option value="openai">OpenAI (ChatGPT)</option>
           <option value="anthropic">Anthropic (Claude)</option>
+          <option value="openai">OpenAI (ChatGPT)</option>
         </select>
       </div>
       <div id="keyBox">
@@ -300,7 +300,7 @@ function defaultState() {
   return {
     team: { rate: 50, size: 40, weeks: 46,
       context: "Kundenservice- und Operations-Team eines Mobilfunkanbieters. Viel Ticketbearbeitung, wöchentliche Abstimmungsmeetings, Reports in Excel, viele verschiedene Tools." },
-    mode: "ai", provider: "openai", models: {}, ideas: []
+    mode: "ai", provider: "anthropic", models: {}, ideas: []
   };
 }
 function loadState() {
@@ -308,7 +308,7 @@ function loadState() {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
     if (s && s.team && Array.isArray(s.ideas)) {
       const merged = Object.assign(defaultState(), s);
-      if (!PROVIDERS[merged.provider]) merged.provider = "openai";
+      if (!PROVIDERS[merged.provider]) merged.provider = "anthropic";
       merged.models = merged.models || {};
       return merged;
     }
