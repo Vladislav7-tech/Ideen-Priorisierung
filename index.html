@@ -173,13 +173,20 @@
       <div>
         <label>Bewertungsmodus</label>
         <div class="seg" id="modeSeg">
-          <button type="button" data-mode="ai">KI (Claude)</button>
+          <button type="button" data-mode="ai">Mit KI</button>
           <button type="button" data-mode="mock">Regelbasiert (ohne KI)</button>
         </div>
       </div>
+      <div id="providerBox">
+        <label for="provider">KI-Anbieter</label>
+        <select id="provider">
+          <option value="openai">OpenAI (ChatGPT)</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+        </select>
+      </div>
       <div id="keyBox">
-        <label for="apiKey">Anthropic API-Key</label>
-        <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+        <label for="apiKey" id="apiKeyLabel">API-Key</label>
+        <input id="apiKey" type="password" autocomplete="off">
       </div>
       <div id="modelBox">
         <label for="model">Modell</label>
@@ -190,7 +197,7 @@
       <button type="button" class="link" id="deleteKey">API-Key löschen</button>
     </div>
     <div class="privacy">
-      <strong>Datenschutz:</strong> Alle Daten bleiben in diesem Browser. Im KI-Modus werden nur die Ideentexte und der Team-Kontext an die Anthropic-API gesendet – bitte keine personenbezogenen oder vertraulichen Daten eingeben. Der API-Key wird nur lokal gespeichert.
+      <strong>Datenschutz:</strong> Alle Daten bleiben in diesem Browser. Im KI-Modus werden nur die Ideentexte und der Team-Kontext an den gewählten KI-Anbieter (OpenAI oder Anthropic) gesendet – bitte keine personenbezogenen oder vertraulichen Daten eingeben. Der API-Key wird nur lokal gespeichert.
     </div>
   </section>
 
@@ -228,7 +235,10 @@
 /* ---------- Konstanten ---------- */
 const STORE_KEY = "ideen-priorisierer-v1";
 const KEY_STORE = "ideen-priorisierer-apikey";
-const DEFAULT_MODEL = "claude-sonnet-5-5";
+const PROVIDERS = {
+  openai:    { name: "OpenAI",    model: "gpt-5.4-mini",      keyHint: "sk-…" },
+  anthropic: { name: "Claude",    model: "claude-sonnet-5-5", keyHint: "sk-ant-…" }
+};
 
 const EXAMPLE_IDEAS = [
   ["Meeting-Zeiten reduzieren", "Weniger und kürzere Meetings, klare Agenda, feste meetingfreie Zeiten"],
@@ -290,21 +300,28 @@ function defaultState() {
   return {
     team: { rate: 50, size: 40, weeks: 46,
       context: "Kundenservice- und Operations-Team eines Mobilfunkanbieters. Viel Ticketbearbeitung, wöchentliche Abstimmungsmeetings, Reports in Excel, viele verschiedene Tools." },
-    mode: "ai", model: DEFAULT_MODEL, ideas: []
+    mode: "ai", provider: "openai", models: {}, ideas: []
   };
 }
 function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && s.team && Array.isArray(s.ideas)) return Object.assign(defaultState(), s);
+    if (s && s.team && Array.isArray(s.ideas)) {
+      const merged = Object.assign(defaultState(), s);
+      if (!PROVIDERS[merged.provider]) merged.provider = "openai";
+      merged.models = merged.models || {};
+      return merged;
+    }
   } catch (e) { /* Speicher nicht verfügbar */ }
   return defaultState();
 }
 function saveState() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ }
 }
-function getKey() { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } }
-function setKey(k) { try { k ? localStorage.setItem(KEY_STORE, k) : localStorage.removeItem(KEY_STORE); } catch (e) {} }
+const keyName = () => KEY_STORE + "-" + state.provider;
+function getKey() { try { return localStorage.getItem(keyName()) || ""; } catch (e) { return ""; } }
+function setKey(k) { try { k ? localStorage.setItem(keyName(), k) : localStorage.removeItem(keyName()); } catch (e) {} }
+const currentModel = () => (state.models && state.models[state.provider]) || PROVIDERS[state.provider].model;
 
 const $ = (id) => document.getElementById(id);
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -361,7 +378,7 @@ function mockEvaluate(idea) {
   });
 }
 
-/* ---------- Bewertung: KI (Claude) ---------- */
+/* ---------- Bewertung: KI (OpenAI oder Claude) ---------- */
 const TOOL = {
   name: "bewertungen_speichern",
   description: "Speichert die Schätzung für jede Idee.",
@@ -446,6 +463,33 @@ async function callClaude(ideas, key, model, withTemperature = true) {
   return tool.input.bewertungen;
 }
 
+async function callOpenAI(ideas, key, model, withTemperature = true) {
+  const body = {
+    model,
+    messages: [{ role: "user", content: buildPrompt(ideas) }],
+    tools: [{ type: "function", function: { name: TOOL.name, description: TOOL.description, parameters: TOOL.input_schema } }],
+    tool_choice: { type: "function", function: { name: TOOL.name } }
+  };
+  if (withTemperature) body.temperature = 0;
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: { "content-type": "application/json", "authorization": "Bearer " + key },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error?.message || res.statusText;
+    // Neuere OpenAI-Modelle erlauben nur die Standard-Temperatur -> einmal ohne versuchen
+    if (withTemperature && res.status === 400 && /temperature/i.test(msg)) return callOpenAI(ideas, key, model, false);
+    const err = new Error(msg); err.status = res.status; throw err;
+  }
+  const call = data.choices?.[0]?.message?.tool_calls?.[0];
+  let parsed;
+  try { parsed = JSON.parse(call?.function?.arguments || ""); } catch (e) { /* ungültiges JSON */ }
+  if (!parsed || !Array.isArray(parsed.bewertungen)) throw new Error("Die KI hat keine gültige Bewertung geliefert.");
+  return parsed.bewertungen;
+}
+
 function fromAI(b) {
   return sanitize({
     persons: b.betroffene_personen, hours: b.ersparnis_stunden_pro_woche_pro_person,
@@ -468,9 +512,11 @@ async function evaluate(all) {
         applyMock(todo, "Kein API-Key hinterlegt – regelbasierte Schätzung verwendet.");
         return;
       }
-      setStatus(`<span class="spinner"></span>Claude bewertet ${todo.length} Idee(n) …`);
+      const prov = PROVIDERS[state.provider];
+      setStatus(`<span class="spinner"></span>${prov.name} bewertet ${todo.length} Idee(n) …`);
       try {
-        const results = await callClaude(todo, key, state.model || DEFAULT_MODEL);
+        const call = state.provider === "openai" ? callOpenAI : callClaude;
+        const results = await call(todo, key, currentModel());
         let missing = 0;
         todo.forEach((idea) => {
           const b = results.find((r) => String(r.id) === idea.id);
@@ -480,7 +526,9 @@ async function evaluate(all) {
         saveState(); render();
         setStatus(`${todo.length - missing} Idee(n) von der KI bewertet` + (missing ? `, ${missing} ohne KI-Antwort regelbasiert ergänzt.` : "."));
       } catch (err) {
-        const reason = err.status === 401 ? "API-Key ungültig" : err.message || "Netzwerkfehler";
+        const reason = err.status === 401 ? "API-Key ungültig"
+          : /quota|credit|balance/i.test(err.message || "") ? "kein Guthaben – Billing prüfen"
+          : err.message || "Netzwerkfehler";
         applyMock(todo, `KI nicht erreichbar (${esc(reason)}) – regelbasierte Schätzung als Fallback verwendet.`, true);
       }
     } else {
@@ -677,7 +725,13 @@ function exportMd() {
 function renderMode() {
   document.querySelectorAll("#modeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.mode === state.mode));
   const ai = state.mode === "ai";
-  $("keyBox").style.display = $("modelBox").style.display = $("keyActions").style.display = ai ? "" : "none";
+  ["providerBox", "keyBox", "modelBox", "keyActions"].forEach((id) => ($(id).style.display = ai ? "" : "none"));
+  const prov = PROVIDERS[state.provider];
+  $("provider").value = state.provider;
+  $("apiKeyLabel").textContent = prov.name + " API-Key";
+  $("apiKey").placeholder = prov.keyHint;
+  $("apiKey").value = getKey();
+  $("model").value = currentModel();
 }
 function render() { renderIdeas(); renderResults(); renderMode(); }
 
@@ -714,11 +768,14 @@ $("modeSeg").addEventListener("click", (ev) => {
   const m = ev.target.dataset.mode; if (!m) return;
   state.mode = m; saveState(); renderMode();
 });
-$("apiKey").value = getKey();
 $("apiKey").addEventListener("change", () => { setKey($("apiKey").value.trim()); setStatus("API-Key lokal gespeichert."); });
 $("deleteKey").addEventListener("click", () => { setKey(""); $("apiKey").value = ""; setStatus("API-Key gelöscht."); });
-$("model").value = state.model || DEFAULT_MODEL;
-$("model").addEventListener("change", () => { state.model = $("model").value.trim() || DEFAULT_MODEL; saveState(); });
+$("model").addEventListener("change", () => {
+  state.models = state.models || {};
+  state.models[state.provider] = $("model").value.trim() || PROVIDERS[state.provider].model;
+  saveState(); renderMode();
+});
+$("provider").addEventListener("change", () => { state.provider = $("provider").value; saveState(); renderMode(); setStatus(""); });
 
 $("evaluate").addEventListener("click", () => evaluate(false));
 $("reevaluate").addEventListener("click", () => evaluate(true));

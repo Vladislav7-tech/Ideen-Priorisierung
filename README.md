@@ -8,7 +8,7 @@ Prototyp für die AI Coding Challenge: Ein Team erfasst Ideen, eine KI schätzt 
 
 - Ideen erfassen (oder 10 Beispielideen laden)
 - Team-Kontext angeben: Stundensatz, Teamgröße, Arbeitswochen, Beschreibung
-- Bewertung durch **Claude (Anthropic API)** oder **regelbasiert** als Fallback ohne KI
+- Bewertung durch **KI (OpenAI oder Anthropic Claude, wählbar)** oder **regelbasiert** als Fallback ohne KI
 - Berechnung in Euro: Nutzen pro Jahr, Einmalaufwand, Netto im 1. Jahr, Amortisationszeit
 - Ranking mit Kategorien: Quick Win / Lohnend / Prüfen
 - Begründung, Annahmen, Risiken und nicht-monetärer Nutzen pro Idee
@@ -30,10 +30,10 @@ Die KI liefert nur die Schätzwerte. Die Priorisierung selbst ist eine transpare
 ## Nutzung
 
 1. `index.html` im Browser öffnen (oder Live-Demo).
-2. Für den KI-Modus einen eigenen Anthropic API-Key eintragen. Ohne Key wird automatisch regelbasiert bewertet.
+2. Für den KI-Modus Anbieter wählen (OpenAI oder Anthropic) und einen eigenen API-Key eintragen. Ohne Key wird automatisch regelbasiert bewertet.
 
 ## Datenschutz
 
 - Alle Daten bleiben im Browser (localStorage), es gibt keinen eigenen Server.
-- Im KI-Modus werden nur Ideentexte und Team-Kontext an die Anthropic-API gesendet.
+- Im KI-Modus werden nur Ideentexte und Team-Kontext an den gewählten KI-Anbieter gesendet.
 - Der API-Key ist nicht im Code enthalten und wird nur lokal im Browser gespeichert.
