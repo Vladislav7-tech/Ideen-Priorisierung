@@ -1,39 +1,26 @@
-# Intelligenter Ideen-Priorisierer
+# Ideen-Priorisierer
 
-Prototyp für die AI Coding Challenge: Ein Team erfasst Ideen, eine KI schätzt Zeit- und Kosteneffekte, und die App priorisiert die Ideen nach ihrem wirtschaftlichen Nutzen.
+Prototyp für die AI Coding Challenge: Ein Team erfasst Ideen, eine KI schätzt Zeitersparnis und Kosten, und die App sortiert die Ideen nach ihrem Nutzen pro Jahr in Euro.
 
 **Live-Demo:** https://vladislav7-tech.github.io/Ideen-Priorisierung/
 
-## Funktionen
+## So funktioniert es
 
-- Ideen erfassen (oder 10 Beispielideen laden)
-- Team-Kontext angeben: Stundensatz, Teamgröße, Arbeitswochen, Beschreibung
-- Bewertung durch **KI (OpenAI oder Anthropic Claude, wählbar)** oder **regelbasiert** als Fallback ohne KI
-- Berechnung in Euro: Nutzen pro Jahr, Einmalaufwand, Netto im 1. Jahr, Amortisationszeit
-- Ranking mit Kategorien: Quick Win / Lohnend / Prüfen
-- Begründung, Annahmen, Risiken und nicht-monetärer Nutzen pro Idee
-- Werte manuell anpassen („Die KI schlägt vor, der Mensch entscheidet“)
-- Diagramm Aufwand vs. Nutzen
-- Export als CSV und Markdown
+1. Team beschreiben: Stundensatz, Anzahl Personen, Arbeitswochen, kurze Beschreibung der Arbeit.
+2. Ideen erfassen (oder Beispiele laden).
+3. API-Key eintragen (Claude oder OpenAI, wird automatisch erkannt) und „Ideen bewerten“ klicken.
+4. Ergebnis: Ranking nach Nutzen pro Jahr. Ein Klick auf eine Idee zeigt Begründung, Risiko und die Werte, die man selbst anpassen kann.
 
 ## Berechnung
 
 ```
-Nutzen/Jahr   = betroffene Personen × Ersparnis h/Woche × Stundensatz × Arbeitswochen × Konfidenz
-Einmalaufwand = Umsetzungsstunden × Stundensatz
-Netto 1. Jahr = Nutzen/Jahr − Einmalaufwand − laufende Kosten
-Amortisation  = Einmalaufwand ÷ monatlicher Netto-Nutzen
+Nutzen pro Jahr = Personen × Ersparnis h/Woche × Stundensatz × Wochen × Konfidenz
+                  − Umsetzungsaufwand (h × Stundensatz)
+                  − laufende Kosten pro Jahr
 ```
 
-Die KI liefert nur die Schätzwerte. Die Priorisierung selbst ist eine transparente Formel und damit nachvollziehbar und reproduzierbar.
-
-## Nutzung
-
-1. `index.html` im Browser öffnen (oder Live-Demo).
-2. Für den KI-Modus Anbieter wählen (OpenAI oder Anthropic) und einen eigenen API-Key eintragen. Ohne Key wird automatisch regelbasiert bewertet.
+Die KI liefert nur die Schätzwerte und die Begründung. Das Ranking selbst ist eine transparente Formel und damit nachvollziehbar.
 
 ## Datenschutz
 
-- Alle Daten bleiben im Browser (localStorage), es gibt keinen eigenen Server.
-- Im KI-Modus werden nur Ideentexte und Team-Kontext an den gewählten KI-Anbieter gesendet.
-- Der API-Key ist nicht im Code enthalten und wird nur lokal im Browser gespeichert.
+Alle Daten bleiben im Browser. An die KI werden nur Ideentexte und Teambeschreibung gesendet. Der API-Key ist nicht im Code enthalten und wird nur lokal gespeichert.
