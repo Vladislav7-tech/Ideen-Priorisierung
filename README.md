@@ -2,7 +2,7 @@
 
 Prototyp für die AI Coding Challenge: Ein Team erfasst Ideen, eine KI schätzt Zeit- und Kosteneffekte, und die App priorisiert die Ideen nach ihrem wirtschaftlichen Nutzen.
 
-**Live-Demo:** _Link folgt (GitHub Pages)_
+**Live-Demo:** https://vladislav7-tech.github.io/Ideen-Priorisierung/
 
 ## Funktionen
 
