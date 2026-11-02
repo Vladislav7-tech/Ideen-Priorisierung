@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ideen-Priorisierer</title>
+<style>
+  :root {
+    --bg: #f4f4f1;
+    --surface: #fcfcfb;
+    --border: #e2e1dc;
+    --text: #0b0b0b;
+    --text-2: #52514e;
+    --muted: #8a8984;
+    --accent: #2a78d6;
+    --accent-ink: #ffffff;
+    --cat-quick: #2a78d6;   /* Quick Win */
+    --cat-good: #1baf7a;    /* Lohnend */
+    --cat-check: #eb6834;   /* Prüfen */
+    --danger: #c63b3a;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header { padding: 28px 24px 8px; max-width: 1200px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--text-2); }
+  main { max-width: 1200px; margin: 0 auto; padding: 12px 24px 48px; display: grid; gap: 16px; }
+  .grid-2 { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+  section.card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px;
+  }
+  h2 { font-size: 17px; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2 .step {
+    display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--text); color: var(--surface); font-size: 13px;
+  }
+  label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 4px; }
+  input, textarea, select {
+    width: 100%; font: inherit; color: var(--text); background: #fff;
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  textarea { resize: vertical; min-height: 64px; }
+  .fields { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+  .fields .full { grid-column: 1 / -1; }
+  @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer; border-radius: 8px; padding: 9px 14px;
+    border: 1px solid var(--border); background: #fff; color: var(--text);
+  }
+  button:hover { background: #f0efea; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.primary:hover { filter: brightness(0.93); }
+  button.big { padding: 13px 22px; font-size: 16px; }
+  button.link { border: none; background: none; padding: 4px 6px; color: var(--text-2); font-weight: 500; }
+  button.link:hover { color: var(--danger); background: none; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .idea-add { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .idea-list { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; max-height: 330px; overflow: auto; }
+  .idea-list li {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; background: #fff;
+  }
+  .idea-list .desc { color: var(--muted); font-size: 13px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg button { border: none; border-radius: 0; font-weight: 500; white-space: nowrap; }
+  .seg button.on { background: var(--text); color: var(--surface); }
+  .privacy { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #eef4fc; color: #1d4f8c; font-size: 13px; }
+  .action-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; padding: 6px 0; }
+  .status { min-height: 22px; text-align: center; color: var(--text-2); font-size: 14px; }
+  .status.error { color: var(--danger); }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+  @media (max-width: 640px) { .tiles { grid-template-columns: 1fr; } }
+  .tile { border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: #fff; }
+  .tile .k { font-size: 13px; color: var(--text-2); }
+  .tile .v { font-size: 24px; font-weight: 700; letter-spacing: -0.01em; }
+  .tile .s { font-size: 13px; color: var(--muted); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 600; color: var(--text-2); font-size: 12.5px; padding: 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tr.main-row { cursor: pointer; }
+  tr.main-row:hover td { background: #f7f7f4; }
+  .rank { font-weight: 700; font-size: 16px; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .src { font-size: 11.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; margin-left: 6px; white-space: nowrap; }
+  .neg { color: var(--danger); }
+  tr.detail td { background: #fafaf7; padding: 14px 16px 18px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 760px) { .detail-grid { grid-template-columns: 1fr; } }
+  .detail-grid h4 { margin: 0 0 6px; font-size: 13px; color: var(--text-2); }
+  .detail-grid p { margin: 0 0 10px; }
+  .edit-fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .edit-fields input { padding: 6px 8px; }
+  .formula { font-size: 13px; color: var(--text-2); background: #fff; border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px; margin-top: 10px; }
+  .chart-wrap { position: relative; }
+  svg text { font-family: inherit; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--text); color: var(--surface);
+    padding: 8px 10px; border-radius: 8px; font-size: 13px; line-height: 1.4; max-width: 260px;
+    opacity: 0; transition: opacity .1s; z-index: 5;
+  }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); margin: 4px 0 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .empty { color: var(--muted); text-align: center; padding: 30px 0; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  footer { text-align: center; color: var(--muted); font-size: 12.5px; padding-bottom: 30px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Intelligenter Ideen-Priorisierer</h1>
+  <p>Ideen sammeln, Zeit- und Kosteneffekte mit KI schätzen, nach wirtschaftlichem Nutzen priorisieren.</p>
+</header>
+
+<main>
+  <div class="grid-2">
+    <!-- 1. Team -->
+    <section class="card">
+      <h2><span class="step">1</span> Team-Kontext</h2>
+      <div class="fields">
+        <div>
+          <label for="rate">Stundensatz (€/h)</label>
+          <input id="rate" type="number" min="1" step="1">
+        </div>
+        <div>
+          <label for="teamSize">Teamgröße (Personen)</label>
+          <input id="teamSize" type="number" min="1" step="1">
+        </div>
+        <div>
+          <label for="weeks">Arbeitswochen / Jahr</label>
+          <input id="weeks" type="number" min="1" max="52" step="1">
+        </div>
+        <div class="full">
+          <label for="context">Wie arbeitet das Team? (hilft der KI bei der Schätzung)</label>
+          <textarea id="context" rows="3"></textarea>
+        </div>
+      </div>
+      <p class="hint">Stundensatz = Arbeitgeberkosten pro Stunde inkl. Nebenkosten, nicht das Bruttogehalt.</p>
+    </section>
+
+    <!-- 2. Ideen -->
+    <section class="card">
+      <h2><span class="step">2</span> Ideen erfassen</h2>
+      <form id="ideaForm" class="idea-add">
+        <input id="ideaTitle" placeholder="z. B. Onboarding automatisieren" required>
+        <button class="primary" type="submit">Hinzufügen</button>
+        <input id="ideaDesc" placeholder="Kurze Beschreibung (optional)" style="grid-column: 1 / -1">
+      </form>
+      <ul id="ideaList" class="idea-list"></ul>
+      <div class="row" style="margin-top:10px">
+        <button id="loadExamples" type="button">Beispielideen laden</button>
+        <button id="clearIdeas" type="button" class="link">Alle löschen</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- 3. KI -->
+  <section class="card">
+    <h2><span class="step">3</span> Bewertung</h2>
+    <div class="fields">
+      <div>
+        <label>Bewertungsmodus</label>
+        <div class="seg" id="modeSeg">
+          <button type="button" data-mode="ai">KI (Claude)</button>
+          <button type="button" data-mode="mock">Regelbasiert (ohne KI)</button>
+        </div>
+      </div>
+      <div id="keyBox">
+        <label for="apiKey">Anthropic API-Key</label>
+        <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+      </div>
+      <div id="modelBox">
+        <label for="model">Modell</label>
+        <input id="model">
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px" id="keyActions">
+      <button type="button" class="link" id="deleteKey">API-Key löschen</button>
+    </div>
+    <div class="privacy">
+      <strong>Datenschutz:</strong> Alle Daten bleiben in diesem Browser. Im KI-Modus werden nur die Ideentexte und der Team-Kontext an die Anthropic-API gesendet – bitte keine personenbezogenen oder vertraulichen Daten eingeben. Der API-Key wird nur lokal gespeichert.
+    </div>
+  </section>
+
+  <div class="action-bar">
+    <button class="primary big" id="evaluate">Ideen bewerten</button>
+    <button id="reevaluate" type="button">Alle neu bewerten</button>
+  </div>
+  <div class="status" id="status" role="status"></div>
+
+  <!-- 4. Ergebnis -->
+  <section class="card" id="results">
+    <h2><span class="step">4</span> Priorisierung</h2>
+    <div id="resultBody"><p class="empty">Noch keine Bewertung. Ideen erfassen und auf „Ideen bewerten“ klicken.</p></div>
+  </section>
+
+  <section class="card" id="chartCard" hidden>
+    <h2>Aufwand vs. Nutzen</h2>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--cat-quick)"></i>Quick Win (Amortisation ≤ 3 Monate)</span>
+      <span><i class="dot" style="background:var(--cat-good)"></i>Lohnend (≤ 12 Monate)</span>
+      <span><i class="dot" style="background:var(--cat-check)"></i>Prüfen (&gt; 12 Monate)</span>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <svg id="chart" width="100%" role="img" aria-label="Streudiagramm: einmaliger Aufwand gegen Nutzen pro Jahr"></svg>
+      <div class="tooltip" id="tooltip"></div>
+    </div>
+    <p class="hint">Punkte oberhalb der gestrichelten Linie amortisieren sich innerhalb eines Jahres. Nummer = Rang.</p>
+  </section>
+</main>
+<footer>Prototyp · Daten werden lokal im Browser gespeichert</footer>
+
+<script>
+"use strict";
+
+/* ---------- Konstanten ---------- */
+const STORE_KEY = "ideen-priorisierer-v1";
+const KEY_STORE = "ideen-priorisierer-apikey";
+const DEFAULT_MODEL = "claude-sonnet-5-5";
+
+const EXAMPLE_IDEAS = [
+  ["Meeting-Zeiten reduzieren", "Weniger und kürzere Meetings, klare Agenda, feste meetingfreie Zeiten"],
+  ["Wissensdatenbank verbessern", "Zentrale, durchsuchbare Ablage für Prozesse und Lösungen"],
+  ["Onboarding automatisieren", "Checklisten, Zugänge und Einarbeitungsmaterial automatisch bereitstellen"],
+  ["AI-Assistent für Support-Anfragen", "KI schlägt Antworten auf häufige Kundenanfragen vor"],
+  ["Automatische Dokumentation", "Prozess- und Code-Dokumentation automatisch aus vorhandenen Quellen erzeugen"],
+  ["Tool-Landschaft vereinfachen", "Überschneidende Tools zusammenführen, Lizenzen reduzieren"],
+  ["Automatische Wochenreports", "KPIs automatisch aus den Systemen ziehen statt manuell in Excel"],
+  ["Self-Service-FAQ für Kunden", "Häufige Fragen online beantworten, bevor ein Ticket entsteht"],
+  ["Textbausteine für Tickets", "Abgestimmte Vorlagen für wiederkehrende Antworten"],
+  ["Zentrale Projektübersicht", "Ein Dashboard für Status, Verantwortliche und Termine"]
+];
+
+/* Regelbasierte Schätzung (Fallback ohne KI): Schlüsselwort -> Annahmen.
+   persons ist ein Anteil des Teams (0–1). */
+const MOCK_RULES = [
+  { kw: ["meeting"], share: 1.0, h: 1.5, effort: 16, run: 0, conf: 60,
+    why: "Kürzere und seltenere Meetings sparen direkt Arbeitszeit bei allen Teilnehmenden. Die Umsetzung braucht vor allem Absprachen, keine Technik.",
+    assume: "Ø 1,5 h weniger Meetingzeit pro Person und Woche.", risk: "Wirkung hängt von Disziplin ab; Abstimmung kann leiden.", extra: "Mehr Fokuszeit." },
+  { kw: ["wissen", "knowledge", "wiki"], share: 1.0, h: 1.0, effort: 120, run: 1500, conf: 50,
+    why: "Weniger Suchzeit und weniger Rückfragen, weil Lösungen zentral auffindbar sind. Der Nutzen entsteht erst, wenn Inhalte gepflegt werden.",
+    assume: "Ø 1 h weniger Suchen/Nachfragen pro Person und Woche.", risk: "Veraltet schnell ohne klare Verantwortung.", extra: "Weniger Abhängigkeit von Einzelpersonen." },
+  { kw: ["onboarding", "einarbeitung"], share: 0.15, h: 2.0, effort: 80, run: 0, conf: 55,
+    why: "Neue Mitarbeitende und ihre Paten verlieren weniger Zeit mit Zugängen und Standardfragen. Betrifft nur einen Teil des Teams gleichzeitig.",
+    assume: "Ca. 15 % des Teams sind jeweils in Einarbeitung oder betreuen diese.", risk: "Lohnt sich vor allem bei hoher Fluktuation.", extra: "Besserer erster Eindruck, schnellere Produktivität." },
+  { kw: ["support", "assistent", "anfrage", "chatbot"], share: 0.6, h: 3.0, effort: 200, run: 6000, conf: 45,
+    why: "Antwortvorschläge verkürzen die Bearbeitungszeit wiederkehrender Anfragen deutlich. Dafür fallen Integrations- und laufende API-Kosten an.",
+    assume: "60 % des Teams bearbeiten Anfragen; Ø 3 h Ersparnis pro Woche.", risk: "Qualitätskontrolle nötig; Datenschutz bei Kundendaten klären.", extra: "Schnellere Antworten für Kund*innen." },
+  { kw: ["dokument", "doku"], share: 0.4, h: 1.0, effort: 60, run: 1200, conf: 45,
+    why: "Dokumentation entsteht nebenbei statt manuell. Der Effekt ist mittel, weil nur ein Teil des Teams regelmäßig dokumentiert.",
+    assume: "40 % des Teams dokumentieren regelmäßig; Ø 1 h Ersparnis pro Woche.", risk: "Automatisch erzeugte Texte müssen geprüft werden.", extra: "Aktuellere Dokumentation." },
+  { kw: ["tool", "lizenz", "software"], share: 1.0, h: 0.5, effort: 160, run: -3000, conf: 40,
+    why: "Weniger Kontextwechsel und Doppelpflege, zusätzlich sinken Lizenzkosten. Die Migration ist aufwendig.",
+    assume: "Ø 0,5 h pro Person und Woche; 3.000 € Lizenzersparnis pro Jahr.", risk: "Migrationsaufwand und Widerstand gegen Veränderung.", extra: "Einfachere IT-Landschaft." },
+  { kw: ["report", "bericht", "kpi"], share: 0.1, h: 3.0, effort: 40, run: 0, conf: 70,
+    why: "Manuelle Reports sind gut automatisierbar und klar messbar. Betrifft wenige Personen, die aber viel Zeit damit verbringen.",
+    assume: "10 % des Teams erstellen Reports; Ø 3 h pro Woche.", risk: "Datenquellen müssen zuverlässig angebunden sein.", extra: "Weniger Fehler, schnellere Entscheidungen." },
+  { kw: ["faq", "self-service", "selfservice"], share: 0.6, h: 1.5, effort: 60, run: 0, conf: 55,
+    why: "Jede Anfrage, die gar nicht erst entsteht, spart Bearbeitungszeit. Inhalte lassen sich aus vorhandenen Antworten ableiten.",
+    assume: "60 % des Teams im Kundenkontakt; Ø 1,5 h weniger Anfragen pro Woche.", risk: "Wirkt nur, wenn Kund*innen die FAQ finden.", extra: "Kund*innen bekommen sofort Antworten." },
+  { kw: ["textbaustein", "vorlage", "template"], share: 0.6, h: 1.0, effort: 16, run: 0, conf: 70,
+    why: "Sehr geringer Aufwand, sofort wirksam: Standardantworten müssen nicht jedes Mal neu formuliert werden.",
+    assume: "60 % des Teams; Ø 1 h pro Woche.", risk: "Antworten können zu unpersönlich wirken.", extra: "Einheitliche Qualität." },
+  { kw: ["projekt", "dashboard", "übersicht", "status"], share: 0.3, h: 1.0, effort: 40, run: 600, conf: 50,
+    why: "Weniger Statusabfragen und Abstimmungsrunden, weil der Stand jederzeit sichtbar ist.",
+    assume: "30 % des Teams arbeiten in Projekten; Ø 1 h pro Woche.", risk: "Nur nützlich, wenn es aktuell gehalten wird.", extra: "Mehr Transparenz." }
+];
+const MOCK_DEFAULT = { share: 0.3, h: 0.5, effort: 40, run: 0, conf: 30,
+  why: "Für diese Idee gibt es keine passende Regel. Es wurde eine vorsichtige Standardschätzung verwendet – bitte die Werte manuell anpassen.",
+  assume: "Standardannahme: 30 % des Teams, 0,5 h pro Woche.", risk: "Schätzung sehr unsicher.", extra: "–" };
+
+/* ---------- State ---------- */
+let state = loadState();
+let openId = null;
+let sortBy = "net";
+
+function defaultState() {
+  return {
+    team: { rate: 50, size: 40, weeks: 46,
+      context: "Kundenservice- und Operations-Team eines Mobilfunkanbieters. Viel Ticketbearbeitung, wöchentliche Abstimmungsmeetings, Reports in Excel, viele verschiedene Tools." },
+    mode: "ai", model: DEFAULT_MODEL, ideas: []
+  };
+}
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (s && s.team && Array.isArray(s.ideas)) return Object.assign(defaultState(), s);
+  } catch (e) { /* Speicher nicht verfügbar */ }
+  return defaultState();
+}
+function saveState() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorieren */ }
+}
+function getKey() { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } }
+function setKey(k) { try { k ? localStorage.setItem(KEY_STORE, k) : localStorage.removeItem(KEY_STORE); } catch (e) {} }
+
+const $ = (id) => document.getElementById(id);
+const uid = () => Math.random().toString(36).slice(2, 10);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const eur = (n) => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("de-DE") + " €";
+const num = (v, d = 0) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : d; };
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+
+/* ---------- Berechnung ---------- */
+function calc(e) {
+  const t = state.team;
+  const benefit = e.persons * e.hours * t.rate * t.weeks * (e.conf / 100);   // erwarteter Nutzen/Jahr
+  const oneTime = e.effort * t.rate;                                          // einmaliger Aufwand
+  const net1 = benefit - oneTime - e.running;                                 // Netto im 1. Jahr
+  const monthly = (benefit - e.running) / 12;
+  const payback = monthly > 0 ? oneTime / monthly : Infinity;                 // Monate
+  const cat = payback <= 3 ? "quick" : payback <= 12 ? "good" : "check";
+  return { benefit, oneTime, net1, payback, cat };
+}
+const CAT = {
+  quick: { label: "Quick Win", color: "var(--cat-quick)" },
+  good:  { label: "Lohnend",   color: "var(--cat-good)" },
+  check: { label: "Prüfen",    color: "var(--cat-check)" }
+};
+const fmtPayback = (m) => !Number.isFinite(m) ? "nie" : m < 1 ? "< 1 Monat" : m.toFixed(1).replace(".", ",") + " Monate";
+
+/* Validierung & Plausibilisierung – gilt für KI- und Regelwerte */
+function sanitize(raw) {
+  const size = state.team.size;
+  const notes = [];
+  let persons = Math.round(num(raw.persons, 1));
+  if (persons > size) { notes.push(`Betroffene Personen von ${persons} auf Teamgröße ${size} begrenzt.`); persons = size; }
+  let hours = num(raw.hours, 0);
+  if (hours > 10) { notes.push(`Ersparnis von ${hours} h auf 10 h/Woche begrenzt.`); hours = 10; }
+  return {
+    persons: clamp(persons, 0, size), hours: clamp(hours, 0, 10),
+    effort: clamp(num(raw.effort, 0), 0, 100000),
+    running: clamp(num(raw.running, 0), -1e7, 1e7),
+    conf: clamp(Math.round(num(raw.conf, 50)), 10, 100),
+    why: String(raw.why || "").trim(), assume: String(raw.assume || "").trim(),
+    risk: String(raw.risk || "").trim(), extra: String(raw.extra || "").trim(),
+    notes
+  };
+}
+
+/* ---------- Bewertung: regelbasiert ---------- */
+function mockEvaluate(idea) {
+  const text = (idea.title + " " + (idea.desc || "")).toLowerCase();
+  const r = MOCK_RULES.find((rule) => rule.kw.some((k) => text.includes(k))) || MOCK_DEFAULT;
+  return sanitize({
+    persons: Math.max(1, Math.round(r.share * state.team.size)), hours: r.h,
+    effort: r.effort, running: r.run, conf: r.conf,
+    why: r.why, assume: r.assume, risk: r.risk, extra: r.extra
+  });
+}
+
+/* ---------- Bewertung: KI (Claude) ---------- */
+const TOOL = {
+  name: "bewertungen_speichern",
+  description: "Speichert die Schätzung für jede Idee.",
+  input_schema: {
+    type: "object",
+    properties: {
+      bewertungen: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            betroffene_personen: { type: "integer", description: "Anzahl Personen im Team, deren Arbeit sich spürbar verbessert" },
+            ersparnis_stunden_pro_woche_pro_person: { type: "number" },
+            umsetzungsaufwand_stunden: { type: "number", description: "Einmaliger Aufwand in Arbeitsstunden" },
+            laufende_kosten_eur_pro_jahr: { type: "number", description: "Lizenzen, API-Kosten, Pflege. Negativ = Einsparung" },
+            konfidenz_prozent: { type: "integer", description: "10–100: wie sicher ist die Schätzung?" },
+            begruendung: { type: "string", description: "2–3 Sätze, warum diese Werte" },
+            annahmen: { type: "string" },
+            risiken: { type: "string" },
+            nicht_monetaerer_nutzen: { type: "string" }
+          },
+          required: ["id", "betroffene_personen", "ersparnis_stunden_pro_woche_pro_person", "umsetzungsaufwand_stunden",
+                     "laufende_kosten_eur_pro_jahr", "konfidenz_prozent", "begruendung", "annahmen", "risiken", "nicht_monetaerer_nutzen"]
+        }
+      }
+    },
+    required: ["bewertungen"]
+  }
+};
+
+function buildPrompt(ideas) {
+  const t = state.team;
+  return `Du bist ein nüchterner Prozess- und Wirtschaftlichkeitsanalyst. Schätze für jede Idee realistische Werte, damit das Team sie nach wirtschaftlichem Nutzen priorisieren kann.
+
+Team:
+- Teamgröße: ${t.size} Personen
+- Stundensatz: ${t.rate} €/h
+- Arbeitswochen pro Jahr: ${t.weeks}
+- Kontext: ${t.context || "keine Angabe"}
+
+Regeln:
+- Sei konservativ. Typische Ersparnis liegt zwischen 0,25 und 3 Stunden pro Person und Woche; mehr nur mit klarer Begründung.
+- betroffene_personen darf ${t.size} nicht überschreiten. Zähle nur Personen, deren Arbeit sich wirklich verändert.
+- umsetzungsaufwand_stunden: einmaliger Aufwand für Einführung inkl. Abstimmung. Organisatorische Änderungen sind günstig, Software-Integrationen teuer.
+- konfidenz_prozent: niedrig (20–40) bei vagen oder schwer messbaren Ideen, hoch (70–90) bei klar messbaren.
+- Bewerte alle Ideen im Vergleich zueinander, damit die Werte konsistent sind.
+- Schreibe Begründung, Annahmen, Risiken und nicht-monetären Nutzen auf Deutsch, kurz und konkret.
+
+Ideen:
+${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""}`).join("\n")}
+
+Rufe das Tool "${TOOL.name}" mit genau einer Bewertung pro Idee auf.`;
+}
+
+async function callClaude(ideas, key, model, withTemperature = true) {
+  const body = {
+    model, max_tokens: 8000,
+    tools: [TOOL], tool_choice: { type: "tool", name: TOOL.name },
+    messages: [{ role: "user", content: buildPrompt(ideas) }]
+  };
+  if (withTemperature) body.temperature = 0;   // möglichst reproduzierbare Ergebnisse
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": key,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify(body)
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const msg = data?.error?.message || res.statusText;
+    // Manche Modelle akzeptieren keinen temperature-Parameter -> einmal ohne versuchen
+    if (withTemperature && res.status === 400 && /temperature/i.test(msg)) return callClaude(ideas, key, model, false);
+    const err = new Error(msg); err.status = res.status; throw err;
+  }
+  const tool = (data.content || []).find((c) => c.type === "tool_use");
+  if (!tool || !Array.isArray(tool.input?.bewertungen)) throw new Error("Die KI hat keine gültige Bewertung geliefert.");
+  return tool.input.bewertungen;
+}
+
+function fromAI(b) {
+  return sanitize({
+    persons: b.betroffene_personen, hours: b.ersparnis_stunden_pro_woche_pro_person,
+    effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr, conf: b.konfidenz_prozent,
+    why: b.begruendung, assume: b.annahmen, risk: b.risiken, extra: b.nicht_monetaerer_nutzen
+  });
+}
+
+async function evaluate(all) {
+  const todo = state.ideas.filter((i) => all || !i.eval);
+  if (!state.ideas.length) return setStatus("Bitte zuerst Ideen erfassen.", true);
+  if (!todo.length) { render(); return setStatus("Alle Ideen sind bereits bewertet. „Alle neu bewerten“ überschreibt die Werte."); }
+
+  const btns = [$("evaluate"), $("reevaluate")];
+  btns.forEach((b) => (b.disabled = true));
+  try {
+    if (state.mode === "ai") {
+      const key = getKey();
+      if (!key) {
+        applyMock(todo, "Kein API-Key hinterlegt – regelbasierte Schätzung verwendet.");
+        return;
+      }
+      setStatus(`<span class="spinner"></span>Claude bewertet ${todo.length} Idee(n) …`);
+      try {
+        const results = await callClaude(todo, key, state.model || DEFAULT_MODEL);
+        let missing = 0;
+        todo.forEach((idea) => {
+          const b = results.find((r) => String(r.id) === idea.id);
+          if (b) idea.eval = Object.assign(fromAI(b), { source: "KI" });
+          else { idea.eval = Object.assign(mockEvaluate(idea), { source: "Regel" }); missing++; }
+        });
+        saveState(); render();
+        setStatus(`${todo.length - missing} Idee(n) von der KI bewertet` + (missing ? `, ${missing} ohne KI-Antwort regelbasiert ergänzt.` : "."));
+      } catch (err) {
+        const reason = err.status === 401 ? "API-Key ungültig" : err.message || "Netzwerkfehler";
+        applyMock(todo, `KI nicht erreichbar (${esc(reason)}) – regelbasierte Schätzung als Fallback verwendet.`, true);
+      }
+    } else {
+      applyMock(todo, `${todo.length} Idee(n) regelbasiert bewertet.`);
+    }
+  } finally {
+    btns.forEach((b) => (b.disabled = false));
+  }
+}
+function applyMock(todo, msg, isError) {
+  todo.forEach((idea) => (idea.eval = Object.assign(mockEvaluate(idea), { source: "Regel" })));
+  saveState(); render(); setStatus(msg, isError);
+}
+function setStatus(html, isError) { const s = $("status"); s.innerHTML = html; s.classList.toggle("error", !!isError); }
+
+/* ---------- Rendering ---------- */
+function renderIdeas() {
+  const ul = $("ideaList");
+  ul.innerHTML = state.ideas.length ? "" : '<li style="justify-content:center;color:var(--muted)">Noch keine Ideen</li>';
+  state.ideas.forEach((i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<div><div>${esc(i.title)}</div>${i.desc ? `<div class="desc">${esc(i.desc)}</div>` : ""}</div>
+      <button class="link" aria-label="Idee löschen" data-del="${i.id}">✕</button>`;
+    ul.appendChild(li);
+  });
+}
+
+function ranked() {
+  const list = state.ideas.filter((i) => i.eval).map((i) => ({ idea: i, r: calc(i.eval) }));
+  const key = { net: (x) => -x.r.net1, payback: (x) => x.r.payback, benefit: (x) => -x.r.benefit }[sortBy];
+  return list.sort((a, b) => key(a) - key(b));
+}
+
+function renderResults() {
+  const body = $("resultBody");
+  const list = ranked();
+  if (!list.length) {
+    body.innerHTML = '<p class="empty">Noch keine Bewertung. Ideen erfassen und auf „Ideen bewerten“ klicken.</p>';
+    $("chartCard").hidden = true; return;
+  }
+  const totalBenefit = list.reduce((s, x) => s + x.r.benefit, 0);
+  const quick = list.filter((x) => x.r.cat === "quick");
+  const top = list[0];
+  const unrated = state.ideas.length - list.length;
+
+  let html = `<div class="tiles">
+    <div class="tile"><div class="k">Erwarteter Nutzen aller Ideen</div><div class="v">${eur(totalBenefit)}</div><div class="s">pro Jahr, gewichtet mit Konfidenz</div></div>
+    <div class="tile"><div class="k">Quick Wins</div><div class="v">${quick.length}</div><div class="s">amortisieren sich in ≤ 3 Monaten</div></div>
+    <div class="tile"><div class="k">Top-Empfehlung</div><div class="v" style="font-size:18px">${esc(top.idea.title)}</div><div class="s">${eur(top.r.net1)} netto im 1. Jahr</div></div>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <div class="row"><label for="sortBy" style="margin:0">Sortieren nach</label>
+      <select id="sortBy" style="width:auto">
+        <option value="net">Netto-Nutzen 1. Jahr</option>
+        <option value="payback">Amortisationszeit</option>
+        <option value="benefit">Nutzen pro Jahr</option>
+      </select></div>
+    <div class="row"><button type="button" id="exportCsv">CSV exportieren</button><button type="button" id="exportMd">Markdown exportieren</button></div>
+  </div>
+  ${unrated ? `<p class="hint" style="margin:0 0 8px">${unrated} Idee(n) noch nicht bewertet.</p>` : ""}
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Idee</th><th>Kategorie</th><th class="num">Nutzen / Jahr</th><th class="num">Einmalaufwand</th><th class="num">Netto 1. Jahr</th><th class="num">Amortisation</th><th class="num">Konfidenz</th></tr></thead><tbody>`;
+
+  list.forEach((x, idx) => {
+    const { idea, r } = x, e = idea.eval, c = CAT[r.cat];
+    const open = openId === idea.id;
+    html += `<tr class="main-row" data-open="${idea.id}" aria-expanded="${open}">
+      <td class="rank">${idx + 1}</td>
+      <td><strong>${esc(idea.title)}</strong><span class="src">${esc(e.source)}</span><div class="hint" style="margin:2px 0 0">${open ? "▾ Details ausblenden" : "▸ Begründung & Werte anzeigen"}</div></td>
+      <td><span class="badge"><i class="dot" style="background:${c.color}"></i>${c.label}</span></td>
+      <td class="num">${eur(r.benefit)}</td>
+      <td class="num">${eur(r.oneTime)}</td>
+      <td class="num ${r.net1 < 0 ? "neg" : ""}"><strong>${eur(r.net1)}</strong></td>
+      <td class="num">${fmtPayback(r.payback)}</td>
+      <td class="num">${e.conf} %</td></tr>`;
+    if (open) html += detailRow(idea, r);
+  });
+  html += "</tbody></table></div>";
+  body.innerHTML = html;
+  $("sortBy").value = sortBy;
+  $("chartCard").hidden = false;
+  renderChart(list);
+}
+
+function detailRow(idea, r) {
+  const e = idea.eval, t = state.team;
+  const f = (k, label, step = "any") => `<div><label for="f-${k}-${idea.id}">${label}</label>
+    <input id="f-${k}-${idea.id}" type="number" step="${step}" value="${e[k]}" data-edit="${k}" data-id="${idea.id}"></div>`;
+  return `<tr class="detail"><td colspan="8"><div class="detail-grid">
+    <div>
+      <h4>Begründung</h4><p>${esc(e.why) || "–"}</p>
+      <h4>Annahmen</h4><p>${esc(e.assume) || "–"}</p>
+      <h4>Risiken</h4><p>${esc(e.risk) || "–"}</p>
+      <h4>Nicht-monetärer Nutzen</h4><p>${esc(e.extra) || "–"}</p>
+      ${e.notes && e.notes.length ? `<h4>Automatisch korrigiert</h4><p class="neg">${e.notes.map(esc).join("<br>")}</p>` : ""}
+    </div>
+    <div>
+      <h4>Werte anpassen (Mensch entscheidet)</h4>
+      <div class="edit-fields">
+        ${f("persons", "Betroffene Personen", 1)}
+        ${f("hours", "Ersparnis h/Woche p. P.", 0.25)}
+        ${f("effort", "Umsetzung (Stunden)", 1)}
+        ${f("running", "Laufende Kosten €/Jahr", 100)}
+        ${f("conf", "Konfidenz %", 5)}
+      </div>
+      <div class="formula">
+        Nutzen/Jahr = ${e.persons} Pers. × ${String(e.hours).replace(".", ",")} h × ${t.rate} €/h × ${t.weeks} Wo. × ${e.conf} % = <strong>${eur(r.benefit)}</strong><br>
+        Netto 1. Jahr = Nutzen − Einmalaufwand (${e.effort} h × ${t.rate} €) − laufende Kosten (${eur(e.running)}) = <strong>${eur(r.net1)}</strong>
+      </div>
+    </div>
+  </div></td></tr>`;
+}
+
+/* ---------- Diagramm (SVG) ---------- */
+function renderChart(list) {
+  const svg = $("chart"), wrap = $("chartWrap");
+  const W = Math.max(320, wrap.clientWidth), H = Math.round(Math.min(420, Math.max(280, W * 0.5)));
+  const m = { l: 74, r: 20, t: 16, b: 46 };
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const maxX = niceMax(Math.max(...list.map((x) => x.r.oneTime), 1000));
+  const maxY = niceMax(Math.max(...list.map((x) => x.r.benefit), 1000));
+  const sx = (v) => m.l + (v / maxX) * (W - m.l - m.r);
+  const sy = (v) => H - m.b - (Math.max(0, v) / maxY) * (H - m.t - m.b);
+  const kfmt = (v) => v >= 1000 ? (v / 1000).toLocaleString("de-DE") + "k €" : v + " €";
+
+  let g = "";
+  for (let i = 0; i <= 4; i++) {
+    const vy = (maxY / 4) * i, vx = (maxX / 4) * i;
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(vy)}" y2="${sy(vy)}" stroke="#e2e1dc"/>`;
+    g += `<text x="${m.l - 8}" y="${sy(vy) + 4}" text-anchor="end" font-size="12" fill="#8a8984">${kfmt(vy)}</text>`;
+    g += `<text x="${sx(vx)}" y="${H - m.b + 18}" text-anchor="middle" font-size="12" fill="#8a8984">${kfmt(vx)}</text>`;
+  }
+  // Break-even-Linie: Nutzen/Jahr = Einmalaufwand
+  const lim = Math.min(maxX, maxY);
+  g += `<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(lim)}" y2="${sy(lim)}" stroke="#8a8984" stroke-dasharray="4 4"/>`;
+  g += `<text x="${W / 2 + 10}" y="${H - 6}" text-anchor="middle" font-size="12.5" fill="#52514e">Einmaliger Aufwand</text>`;
+  g += `<text transform="translate(14 ${(H - m.b + m.t) / 2}) rotate(-90)" text-anchor="middle" font-size="12.5" fill="#52514e">Nutzen pro Jahr</text>`;
+
+  // Punkte (größere unsichtbare Trefferfläche)
+  list.slice().reverse().forEach((x) => {
+    const idx = list.indexOf(x);
+    const cx = sx(x.r.oneTime), cy = sy(x.r.benefit);
+    g += `<g class="pt" data-i="${idx}" style="cursor:pointer">
+      <circle cx="${cx}" cy="${cy}" r="18" fill="transparent"/>
+      <circle cx="${cx}" cy="${cy}" r="11" fill="${CAT[x.r.cat].color}" stroke="#fcfcfb" stroke-width="2"/>
+      <text x="${cx}" y="${cy + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${idx + 1}</text></g>`;
+  });
+  svg.innerHTML = g;
+
+  const tip = $("tooltip");
+  svg.querySelectorAll(".pt").forEach((el) => {
+    const show = () => {
+      const x = list[+el.dataset.i];
+      tip.innerHTML = `<strong>${el.dataset.i * 1 + 1}. ${esc(x.idea.title)}</strong><br>Nutzen/Jahr: ${eur(x.r.benefit)}<br>Einmalaufwand: ${eur(x.r.oneTime)}<br>Amortisation: ${fmtPayback(x.r.payback)}`;
+      const c = el.querySelectorAll("circle")[1];
+      const scale = svg.clientWidth / W;
+      let left = c.cx.baseVal.value * scale + 14, top = c.cy.baseVal.value * scale - 10;
+      if (left + 260 > wrap.clientWidth) left = c.cx.baseVal.value * scale - 270;
+      tip.style.left = Math.max(0, left) + "px"; tip.style.top = Math.max(0, top) + "px"; tip.style.opacity = 1;
+    };
+    el.addEventListener("mouseenter", show);
+    el.addEventListener("click", show);
+    el.addEventListener("mouseleave", () => (tip.style.opacity = 0));
+  });
+}
+function niceMax(v) {
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const f of [1, 2, 2.5, 5, 10]) if (f * p >= v * 1.08) return f * p;
+  return 10 * p;
+}
+
+/* ---------- Export ---------- */
+function download(name, text, type) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function exportCsv() {
+  const rows = [["Rang", "Idee", "Kategorie", "Nutzen/Jahr (€)", "Einmalaufwand (€)", "Netto 1. Jahr (€)", "Amortisation (Monate)", "Konfidenz (%)", "Quelle", "Begründung"]];
+  ranked().forEach((x, i) => rows.push([i + 1, x.idea.title, CAT[x.r.cat].label, Math.round(x.r.benefit), Math.round(x.r.oneTime),
+    Math.round(x.r.net1), Number.isFinite(x.r.payback) ? x.r.payback.toFixed(1) : "", x.idea.eval.conf, x.idea.eval.source, x.idea.eval.why]));
+  const csv = "﻿" + rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+  download("priorisierung.csv", csv, "text/csv");
+}
+function exportMd() {
+  let md = `# Ideen-Priorisierung\n\nStundensatz ${state.team.rate} €/h · Team ${state.team.size} Personen · ${state.team.weeks} Wochen/Jahr\n\n| # | Idee | Kategorie | Nutzen/Jahr | Netto 1. Jahr | Amortisation |\n|---|---|---|---|---|---|\n`;
+  ranked().forEach((x, i) => (md += `| ${i + 1} | ${x.idea.title} | ${CAT[x.r.cat].label} | ${eur(x.r.benefit)} | ${eur(x.r.net1)} | ${fmtPayback(x.r.payback)} |\n`));
+  md += "\n## Begründungen\n\n";
+  ranked().forEach((x, i) => (md += `**${i + 1}. ${x.idea.title}** – ${x.idea.eval.why}\n\n`));
+  download("priorisierung.md", md, "text/markdown");
+}
+
+/* ---------- Events ---------- */
+function renderMode() {
+  document.querySelectorAll("#modeSeg button").forEach((b) => b.classList.toggle("on", b.dataset.mode === state.mode));
+  const ai = state.mode === "ai";
+  $("keyBox").style.display = $("modelBox").style.display = $("keyActions").style.display = ai ? "" : "none";
+}
+function render() { renderIdeas(); renderResults(); renderMode(); }
+
+function bindTeam(id, prop, isNum) {
+  const el = $(id);
+  el.value = state.team[prop];
+  el.addEventListener("input", () => {
+    state.team[prop] = isNum ? Math.max(1, num(el.value, 1)) : el.value;
+    saveState(); renderResults();
+  });
+}
+bindTeam("rate", "rate", true); bindTeam("teamSize", "size", true); bindTeam("weeks", "weeks", true); bindTeam("context", "context", false);
+
+$("ideaForm").addEventListener("submit", (ev) => {
+  ev.preventDefault();
+  const title = $("ideaTitle").value.trim();
+  if (!title) return;
+  state.ideas.push({ id: uid(), title, desc: $("ideaDesc").value.trim() });
+  $("ideaTitle").value = ""; $("ideaDesc").value = ""; $("ideaTitle").focus();
+  saveState(); render();
+});
+$("ideaList").addEventListener("click", (ev) => {
+  const id = ev.target.dataset.del; if (!id) return;
+  state.ideas = state.ideas.filter((i) => i.id !== id); saveState(); render();
+});
+$("loadExamples").addEventListener("click", () => {
+  const existing = new Set(state.ideas.map((i) => i.title.toLowerCase()));
+  EXAMPLE_IDEAS.forEach(([title, desc]) => { if (!existing.has(title.toLowerCase())) state.ideas.push({ id: uid(), title, desc }); });
+  saveState(); render();
+});
+$("clearIdeas").addEventListener("click", () => { state.ideas = []; openId = null; saveState(); render(); setStatus(""); });
+
+$("modeSeg").addEventListener("click", (ev) => {
+  const m = ev.target.dataset.mode; if (!m) return;
+  state.mode = m; saveState(); renderMode();
+});
+$("apiKey").value = getKey();
+$("apiKey").addEventListener("change", () => { setKey($("apiKey").value.trim()); setStatus("API-Key lokal gespeichert."); });
+$("deleteKey").addEventListener("click", () => { setKey(""); $("apiKey").value = ""; setStatus("API-Key gelöscht."); });
+$("model").value = state.model || DEFAULT_MODEL;
+$("model").addEventListener("change", () => { state.model = $("model").value.trim() || DEFAULT_MODEL; saveState(); });
+
+$("evaluate").addEventListener("click", () => evaluate(false));
+$("reevaluate").addEventListener("click", () => evaluate(true));
+
+$("resultBody").addEventListener("click", (ev) => {
+  if (ev.target.id === "exportCsv") return exportCsv();
+  if (ev.target.id === "exportMd") return exportMd();
+  if (ev.target.closest("input, select, button")) return;
+  const row = ev.target.closest("tr.main-row");
+  if (row) { openId = openId === row.dataset.open ? null : row.dataset.open; renderResults(); }
+});
+$("resultBody").addEventListener("change", (ev) => {
+  if (ev.target.id === "sortBy") { sortBy = ev.target.value; renderResults(); return; }
+  const k = ev.target.dataset.edit; if (!k) return;
+  const idea = state.ideas.find((i) => i.id === ev.target.dataset.id);
+  idea.eval[k] = num(ev.target.value, 0);
+  idea.eval = Object.assign(sanitize(idea.eval), { source: "manuell angepasst" });
+  saveState(); renderResults();
+});
+let resizeT; window.addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => { const l = ranked(); if (l.length) renderChart(l); }, 150); });
+
+render();
+</script>
+</body>
+</html>
