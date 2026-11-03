@@ -224,6 +224,7 @@ function sanitize(raw) {
     effort: clamp(num(raw.effort, 0), 0, 100000),
     running: clamp(num(raw.running, 0), -1e7, 1e7),
     why: String(raw.why || "").trim(),
+    costs: String(raw.costs || "").trim(),
     risk: String(raw.risk || "").trim()
   };
 }
@@ -251,9 +252,10 @@ const TOOL = {
             umsetzungsaufwand_stunden: { type: "number", description: "Einmaliger Aufwand in Arbeitsstunden" },
             laufende_kosten_eur_pro_jahr: { type: "number", description: "Lizenzen, API-Kosten, Pflege. Negativ = Einsparung" },
             begruendung: { type: "string", description: "2–3 kurze Sätze" },
+            kosten: { type: "string", description: "Eine kurze Zeile: woraus Umsetzungsaufwand und laufende Kosten bestehen, mit Beträgen" },
             risiken: { type: "string", description: "1 kurzer Satz" }
           },
-          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "begruendung", "risiken"]
+          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "begruendung", "kosten", "risiken"]
         }
       }
     },
@@ -268,6 +270,7 @@ Schätze für jede Idee:
 - ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt. Preise die Unsicherheit direkt ein: je vager oder riskanter die Idee, desto niedriger der Wert.
 - umsetzungsaufwand_stunden: einmaliger Aufwand für Einführung inkl. Abstimmung. Organisatorisches ist günstig, Software-Integration teuer.
 - laufende_kosten_eur_pro_jahr: Lizenzen, API-Kosten, Pflege (negativ, wenn Kosten wegfallen).
+- kosten: eine kurze Zeile, woraus Umsetzung und laufende Kosten bestehen, mit Beträgen. Beispiel: "Umsetzung: Einrichtung 40 h, Schulung 20 h · Laufend: Lizenz ca. 3.000 €, Pflege ca. 1.000 €". Nenne auch, ob du von einem fertigen Add-on oder einer Eigenentwicklung ausgehst, falls relevant.
 - begruendung (2–3 kurze Sätze) und risiken (1 Satz), auf Deutsch und konkret.
 
 Sei konservativ, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
@@ -328,7 +331,7 @@ function extractJson(text) {
 
 const fromAI = (b) => sanitize({
   save: b.ersparnis_prozent, effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr,
-  why: b.begruendung, risk: b.risiken
+  why: b.begruendung, costs: b.kosten, risk: b.risiken
 });
 
 async function evaluate() {
@@ -396,6 +399,7 @@ function detail(idea, r) {
   return `<div class="detail">
     <div>
       <h4>Begründung</h4><p>${esc(e.why) || "–"}</p>
+      ${e.costs ? `<h4>Kosten</h4><p>${esc(e.costs)}</p>` : ""}
       ${e.risk ? `<h4>Risiko</h4><p>${esc(e.risk)}</p>` : ""}
     </div>
     <div>
