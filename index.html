@@ -355,27 +355,35 @@ function fromAI(b) {
   });
 }
 
+/* Fingerabdruck einer Idee: ändert sich etwas daran, wird sie neu bewertet.
+   Unveränderte Ideen behalten ihre Bewertung -> stabile Ergebnisse trotz schwankender KI-Antworten. */
+const signature = (i) => JSON.stringify([i.title, i.desc, i.persons, i.rate, i.hours]);
+
 async function evaluate() {
   if (!state.ideas.length) return setStatus("Bitte zuerst Ideen erfassen.", true);
   const key = getKey();
   if (!key) { $("apiKey").focus(); return setStatus("Bitte API-Key eintragen.", true); }
 
+  const todo = state.ideas.filter((i) => !i.eval || i.evalSig !== signature(i));
+  if (!todo.length) return setStatus("Alle Ideen sind bereits bewertet.");
+
   const btn = $("evaluate");
   btn.disabled = true;
-  setStatus(`<span class="spinner"></span>Die KI bewertet ${state.ideas.length} Ideen …`);
+  setStatus(`<span class="spinner"></span>Die KI bewertet ${todo.length} ${todo.length === 1 ? "Idee" : "Ideen"} …`);
   try {
-    const results = providerOf(key) === "anthropic" ? await callClaude(state.ideas, key) : await callOpenAI(state.ideas, key);
+    const results = providerOf(key) === "anthropic" ? await callClaude(todo, key) : await callOpenAI(todo, key);
     if (!Array.isArray(results)) throw new Error("Keine gültige Antwort der KI.");
-    state.ideas.forEach((idea) => {
+    todo.forEach((idea) => {
       const b = results.find((r) => String(r.id) === idea.id);
       idea.eval = b ? fromAI(b) : fallbackEvaluate(idea);
+      idea.evalSig = b ? signature(idea) : null;   // ohne KI-Antwort beim nächsten Klick erneut versuchen
     });
     setStatus("");
   } catch (err) {
     const reason = err.status === 401 ? "API-Key ungültig"
       : /quota|credit|balance/i.test(err.message || "") ? "kein Guthaben"
       : "nicht erreichbar";
-    state.ideas.forEach((idea) => (idea.eval = fallbackEvaluate(idea)));
+    todo.forEach((idea) => { idea.eval = fallbackEvaluate(idea); idea.evalSig = null; });
     setStatus(`KI ${reason} – vorläufige Schätzung ohne KI angezeigt.`, true);
   } finally {
     btn.disabled = false;
