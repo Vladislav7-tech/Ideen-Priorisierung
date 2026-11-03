@@ -154,7 +154,7 @@
 /* ---------- Konfiguration ---------- */
 const STORE_KEY = "ideen-priorisierer-v3";
 const KEY_STORE = "ideen-priorisierer-key";
-const WEEKS = 46;   // Arbeitswochen pro Jahr (nach Urlaub/Feiertagen)
+const WEEKS = 44;   // Arbeitswochen pro Jahr: 52 − ca. 30 Urlaubstage − Feiertage NRW
 const MODELS = { anthropic: "claude-sonnet-5-5", openai: "gpt-5.4-mini" };
 const providerOf = (key) => (key.startsWith("sk-ant-") ? "anthropic" : "openai");
 

@@ -14,7 +14,7 @@ Prototyp für die AI Coding Challenge: Ideen erfassen, von einer KI bewerten las
 ## Berechnung
 
 ```
-Zeitersparnis = Personen × Std./Woche heute × Ersparnis % × €/Stunde × 46 Wochen
+Zeitersparnis = Personen × Std./Woche heute × Ersparnis % × €/Stunde × 44 Wochen
 Nutzen / Jahr = Zeitersparnis − Umsetzungsaufwand (Stunden × €/Stunde) − laufende Kosten
 ```
 
