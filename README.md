@@ -15,8 +15,10 @@ Prototyp für die AI Coding Challenge: Ideen erfassen, von einer KI bewerten las
 
 ```
 Zeitersparnis = Personen × Std./Woche heute × Ersparnis % × €/Stunde × 44 Wochen
-Nutzen / Jahr = Zeitersparnis − Umsetzungsaufwand (Stunden × €/Stunde) − laufende Kosten
+Nutzen / Jahr = Zeitersparnis − Umsetzungsaufwand (Stunden × €/Stunde) ÷ 3 Jahre − laufende Kosten
 ```
+
+Einmalige Umsetzungskosten werden auf drei Jahre verteilt, damit Ideen mit hoher Anfangsinvestition, aber langfristigem Nutzen fair verglichen werden.
 
 Die KI liefert nur Schätzwerte und Begründung. Das Ranking ist eine transparente Formel und damit nachvollziehbar.
 

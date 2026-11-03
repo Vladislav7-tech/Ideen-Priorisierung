@@ -162,6 +162,7 @@
 const STORE_KEY = "ideen-priorisierer-v3";
 const KEY_STORE = "ideen-priorisierer-key";
 const WEEKS = 44;   // Arbeitswochen pro Jahr: 52 − ca. 30 Urlaubstage − Feiertage NRW
+const YEARS = 3;    // einmalige Kosten werden auf 3 Jahre verteilt (üblicher Planungshorizont für IT-Maßnahmen)
 const MODELS = { anthropic: "claude-sonnet-5-5", openai: "gpt-5.4-mini" };
 const providerOf = (key) => (key.startsWith("sk-ant-") ? "anthropic" : "openai");
 
@@ -217,12 +218,12 @@ const de = (n) => String(n).replace(".", ",");
 
 /* ---------- Berechnung ----------
    Zeitersparnis/Jahr = Personen × Std./Woche heute × Ersparnis % × €/h × 44 Wochen
-   Nutzen/Jahr        = Zeitersparnis − Umsetzungsaufwand (h × €/h) − laufende Kosten          */
+   Nutzen/Jahr        = Zeitersparnis − Umsetzungsaufwand (h × €/h) ÷ 3 Jahre − laufende Kosten */
 function calc(idea) {
   const e = idea.eval;
   const gross = idea.persons * idea.hours * (e.save / 100) * idea.rate * WEEKS;
   const oneTime = e.effort * idea.rate;
-  return { gross, oneTime, net: gross - oneTime - e.running };
+  return { gross, oneTime, net: gross - oneTime / YEARS - e.running };
 }
 
 function sanitize(raw) {
@@ -447,7 +448,7 @@ function detail(idea, r) {
         ${f("running", "Laufend €/Jahr", 100)}
       </div>
       <div class="calc">${idea.persons} Pers. × ${de(idea.hours)} h × ${e.save} % × ${idea.rate} € × ${WEEKS} Wo. = ${eur(r.gross)}<br>
-        − ${eur(r.oneTime)} Umsetzung ${e.running < 0 ? `+ ${eur(-e.running)} eingespart` : `− ${eur(e.running)} laufend`} = <strong>${eur(r.net)}</strong></div>
+        − ${eur(r.oneTime)} Umsetzung ÷ ${YEARS} Jahre ${e.running < 0 ? `+ ${eur(-e.running)} eingespart` : `− ${eur(e.running)} laufend`} = <strong>${eur(r.net)}</strong></div>
     </div>
   </div>`;
 }
