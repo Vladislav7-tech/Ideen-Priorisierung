@@ -277,17 +277,17 @@ const TOOL = {
 };
 
 function buildPrompt(ideas) {
-  return `Du bist ein nüchterner Prozess- und Wirtschaftlichkeitsanalyst in einem Unternehmen. Ein Team hat Verbesserungsideen gesammelt. Zu jeder Idee ist angegeben, wie viele Personen betroffen sind und wie viele Stunden pro Woche eine Person HEUTE mit der betroffenen Aufgabe verbringt.
+  return `Du bist ein erfahrener Prozess- und Wirtschaftlichkeitsanalyst in einem Unternehmen. Ein Team hat Verbesserungsideen gesammelt. Zu jeder Idee ist angegeben, wie viele Personen betroffen sind und wie viele Stunden pro Woche eine Person HEUTE mit der betroffenen Aufgabe verbringt.
 
 Schätze für jede Idee:
-- ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt. Preise die Unsicherheit direkt ein: je vager oder riskanter die Idee, desto niedriger der Wert.
+- ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt – der erwartete Wert, weder optimistisch noch pessimistisch. Orientierung aus der Praxis: organisatorische Regeln (z. B. Meetings) 30–50 %, bessere Ablage/Suche 30–50 %, KI-Entwürfe mit menschlicher Prüfung 40–60 %, vollständige Automatisierung 70–90 %. Weiche nur mit konkretem Grund davon ab.
 - umsetzung: Liste der einmaligen Arbeitsschritte mit Stunden (2–4 Posten). Organisatorisches ist günstig, Software-Integration teuer.
 - laufende_kosten: Liste der jährlichen Kosten in Euro (0–3 Posten; leer, wenn keine). Rechne von unten nach oben (Nutzer × Preis pro Monat × 12; Pflegestunden × Stundensatz der Idee). Orientierung: KI-Assistenz-Add-ons für Helpdesks ca. 25–50 € pro Nutzer und Monat, typische SaaS-Tools 5–30 € pro Nutzer und Monat, Pflege meist wenige Stunden pro Monat. Wegfallende Kosten als negativer Betrag.
 - posten: kurzer Name (2–5 Wörter) ohne Zahlen, z. B. "KI-Add-on" oder "Pflege und Qualitätskontrolle".
 - rechnung (nur bei laufenden Kosten): Rechenweg pro Monat mit Einheiten, z. B. "10 Nutzer × 40 €/Monat" oder "4 h/Monat × 25 €/h". Keine Überlegungen, Korrekturen oder Auslassungspunkte.
 - begruendung (2–3 kurze Sätze) und risiken (1 Satz), auf Deutsch und konkret.
 
-Sei konservativ, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
+Schätze realistisch, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
 
 Ideen:
 ${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""} | ${i.persons} Personen, heute ${de(i.hours)} Std./Woche pro Person, Stundensatz ${i.rate} €`).join("\n")}
