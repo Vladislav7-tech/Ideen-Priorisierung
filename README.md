@@ -8,13 +8,13 @@ Prototyp für die AI Coding Challenge: Ideen erfassen, von einer KI bewerten las
 
 1. Pro Idee angeben: wie viele Personen betroffen sind, was eine Arbeitsstunde kostet und wie viele Stunden pro Woche eine Person heute mit dieser Aufgabe verbringt.
 2. API-Key eintragen (Claude oder OpenAI, wird automatisch erkannt) und „Ideen bewerten“ klicken.
-3. Die KI schätzt pro Idee: wie viel Prozent der heutigen Zeit wegfallen, den Umsetzungsaufwand, laufende Kosten und wie sicher die Schätzung ist – mit kurzer Begründung.
+3. Die KI schätzt pro Idee: wie viel Prozent der heutigen Zeit wegfallen (Unsicherheit bereits eingepreist), den Umsetzungsaufwand und laufende Kosten – mit kurzer Begründung.
 4. Ergebnis: Ranking nach Nutzen pro Jahr. Ein Klick auf eine Idee zeigt Begründung, Risiko und die Werte, die man selbst anpassen kann.
 
 ## Berechnung
 
 ```
-Zeitersparnis = Personen × Std./Woche heute × Ersparnis % × €/Stunde × 46 Wochen × Konfidenz
+Zeitersparnis = Personen × Std./Woche heute × Ersparnis % × €/Stunde × 46 Wochen
 Nutzen / Jahr = Zeitersparnis − Umsetzungsaufwand (Stunden × €/Stunde) − laufende Kosten
 ```
 

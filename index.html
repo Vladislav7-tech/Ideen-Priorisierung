@@ -172,18 +172,18 @@ const EXAMPLE_IDEAS = [
 
 /* Interner Fallback, falls die KI nicht erreichbar ist (z. B. kein Internet bei der Demo). */
 const FALLBACK_RULES = [
-  { kw: ["meeting"], save: 30, effort: 16, run: 0, conf: 60, why: "Kürzere und seltenere Meetings sparen direkt Zeit bei allen Teilnehmenden. Die Umsetzung braucht vor allem Absprachen." },
-  { kw: ["wissen", "wiki"], save: 40, effort: 120, run: 1500, conf: 50, why: "Weniger Suchzeit und Rückfragen, wenn Lösungen zentral auffindbar sind – sofern die Inhalte gepflegt werden." },
-  { kw: ["onboarding", "einarbeitung"], save: 35, effort: 80, run: 0, conf: 55, why: "Zugänge und Standardfragen kosten neue Mitarbeitende und Paten weniger Zeit." },
-  { kw: ["support", "assistent", "anfrage"], save: 20, effort: 200, run: 6000, conf: 45, why: "Antwortvorschläge verkürzen die Bearbeitung wiederkehrender Anfragen, kosten aber Integration und API-Gebühren." },
-  { kw: ["dokument", "protokoll", "notiz"], save: 50, effort: 60, run: 2400, conf: 50, why: "Notizen und Zusammenfassungen entstehen automatisch statt manuell." },
-  { kw: ["tool", "lizenz"], save: 25, effort: 160, run: -3000, conf: 40, why: "Weniger Kontextwechsel und Lizenzkosten, aber aufwendige Migration." },
-  { kw: ["report", "bericht", "kpi"], save: 75, effort: 40, run: 0, conf: 70, why: "Manuelle Reports lassen sich gut automatisieren." },
-  { kw: ["faq", "self-service"], save: 10, effort: 60, run: 0, conf: 55, why: "Jede Anfrage, die gar nicht erst entsteht, spart Bearbeitungszeit." },
-  { kw: ["textbaustein", "vorlage"], save: 15, effort: 16, run: 0, conf: 70, why: "Geringer Aufwand, sofort wirksam: Standardantworten müssen nicht neu formuliert werden." },
-  { kw: ["projekt", "dashboard", "übersicht"], save: 40, effort: 40, run: 600, conf: 50, why: "Weniger Statusabfragen, weil der Stand jederzeit sichtbar ist." }
+  { kw: ["meeting"], save: 30, effort: 16, run: 0, why: "Kürzere und seltenere Meetings sparen direkt Zeit bei allen Teilnehmenden. Die Umsetzung braucht vor allem Absprachen." },
+  { kw: ["wissen", "wiki"], save: 40, effort: 120, run: 1500, why: "Weniger Suchzeit und Rückfragen, wenn Lösungen zentral auffindbar sind – sofern die Inhalte gepflegt werden." },
+  { kw: ["onboarding", "einarbeitung"], save: 35, effort: 80, run: 0, why: "Zugänge und Standardfragen kosten neue Mitarbeitende und Paten weniger Zeit." },
+  { kw: ["support", "assistent", "anfrage"], save: 20, effort: 200, run: 6000, why: "Antwortvorschläge verkürzen die Bearbeitung wiederkehrender Anfragen, kosten aber Integration und API-Gebühren." },
+  { kw: ["dokument", "protokoll", "notiz"], save: 50, effort: 60, run: 2400, why: "Notizen und Zusammenfassungen entstehen automatisch statt manuell." },
+  { kw: ["tool", "lizenz"], save: 25, effort: 160, run: -3000, why: "Weniger Kontextwechsel und Lizenzkosten, aber aufwendige Migration." },
+  { kw: ["report", "bericht", "kpi"], save: 75, effort: 40, run: 0, why: "Manuelle Reports lassen sich gut automatisieren." },
+  { kw: ["faq", "self-service"], save: 10, effort: 60, run: 0, why: "Jede Anfrage, die gar nicht erst entsteht, spart Bearbeitungszeit." },
+  { kw: ["textbaustein", "vorlage"], save: 15, effort: 16, run: 0, why: "Geringer Aufwand, sofort wirksam: Standardantworten müssen nicht neu formuliert werden." },
+  { kw: ["projekt", "dashboard", "übersicht"], save: 40, effort: 40, run: 600, why: "Weniger Statusabfragen, weil der Stand jederzeit sichtbar ist." }
 ];
-const FALLBACK_DEFAULT = { save: 20, effort: 40, run: 0, conf: 30, why: "Vorsichtige Standardschätzung – bitte Werte prüfen." };
+const FALLBACK_DEFAULT = { save: 20, effort: 40, run: 0, why: "Vorsichtige Standardschätzung – bitte Werte prüfen." };
 
 /* ---------- State ---------- */
 let state = loadState();
@@ -209,11 +209,11 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const de = (n) => String(n).replace(".", ",");
 
 /* ---------- Berechnung ----------
-   Zeitersparnis/Jahr = Personen × Std./Woche heute × Ersparnis % × €/h × 46 Wochen × Konfidenz
+   Zeitersparnis/Jahr = Personen × Std./Woche heute × Ersparnis % × €/h × 46 Wochen
    Nutzen/Jahr        = Zeitersparnis − Umsetzungsaufwand (h × €/h) − laufende Kosten          */
 function calc(idea) {
   const e = idea.eval;
-  const gross = idea.persons * idea.hours * (e.save / 100) * idea.rate * WEEKS * (e.conf / 100);
+  const gross = idea.persons * idea.hours * (e.save / 100) * idea.rate * WEEKS;
   const oneTime = e.effort * idea.rate;
   return { gross, oneTime, net: gross - oneTime - e.running };
 }
@@ -223,7 +223,6 @@ function sanitize(raw) {
     save: clamp(Math.round(num(raw.save, 0)), 0, 100),
     effort: clamp(num(raw.effort, 0), 0, 100000),
     running: clamp(num(raw.running, 0), -1e7, 1e7),
-    conf: clamp(Math.round(num(raw.conf, 50)), 10, 100),
     why: String(raw.why || "").trim(),
     risk: String(raw.risk || "").trim()
   };
@@ -232,7 +231,7 @@ function sanitize(raw) {
 function fallbackEvaluate(idea) {
   const text = (idea.title + " " + (idea.desc || "")).toLowerCase();
   const r = FALLBACK_RULES.find((x) => x.kw.some((k) => text.includes(k))) || FALLBACK_DEFAULT;
-  return sanitize({ save: r.save, effort: r.effort, running: r.run, conf: r.conf, why: r.why });
+  return sanitize({ save: r.save, effort: r.effort, running: r.run, why: r.why });
 }
 
 /* ---------- KI ---------- */
@@ -248,14 +247,13 @@ const TOOL = {
           type: "object",
           properties: {
             id: { type: "string" },
-            ersparnis_prozent: { type: "integer", description: "Anteil der heutigen Zeit für diese Aufgabe, der durch die Idee wegfällt (0–100)" },
+            ersparnis_prozent: { type: "integer", description: "Realistisch erwarteter Anteil der heutigen Zeit, der wegfällt (0–100), Unsicherheit bereits eingepreist" },
             umsetzungsaufwand_stunden: { type: "number", description: "Einmaliger Aufwand in Arbeitsstunden" },
             laufende_kosten_eur_pro_jahr: { type: "number", description: "Lizenzen, API-Kosten, Pflege. Negativ = Einsparung" },
-            konfidenz_prozent: { type: "integer", description: "10–100" },
             begruendung: { type: "string", description: "2–3 kurze Sätze" },
             risiken: { type: "string", description: "1 kurzer Satz" }
           },
-          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "konfidenz_prozent", "begruendung", "risiken"]
+          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "begruendung", "risiken"]
         }
       }
     },
@@ -267,10 +265,9 @@ function buildPrompt(ideas) {
   return `Du bist ein nüchterner Prozess- und Wirtschaftlichkeitsanalyst in einem Unternehmen. Ein Team hat Verbesserungsideen gesammelt. Zu jeder Idee ist angegeben, wie viele Personen betroffen sind und wie viele Stunden pro Woche eine Person HEUTE mit der betroffenen Aufgabe verbringt.
 
 Schätze für jede Idee:
-- ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt.
+- ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt. Preise die Unsicherheit direkt ein: je vager oder riskanter die Idee, desto niedriger der Wert.
 - umsetzungsaufwand_stunden: einmaliger Aufwand für Einführung inkl. Abstimmung. Organisatorisches ist günstig, Software-Integration teuer.
 - laufende_kosten_eur_pro_jahr: Lizenzen, API-Kosten, Pflege (negativ, wenn Kosten wegfallen).
-- konfidenz_prozent: 20–40 bei vagen Ideen, 70–90 bei klar messbaren.
 - begruendung (2–3 kurze Sätze) und risiken (1 Satz), auf Deutsch und konkret.
 
 Sei konservativ, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
@@ -331,7 +328,7 @@ function extractJson(text) {
 
 const fromAI = (b) => sanitize({
   save: b.ersparnis_prozent, effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr,
-  conf: b.konfidenz_prozent, why: b.begruendung, risk: b.risiken
+  why: b.begruendung, risk: b.risiken
 });
 
 async function evaluate() {
@@ -407,7 +404,7 @@ function detail(idea, r) {
         ${f("effort", "Umsetzung (h)", 1)}
         ${f("running", "Laufend €/Jahr", 100)}
       </div>
-      <div class="calc">${idea.persons} Pers. × ${de(idea.hours)} h × ${e.save} % × ${idea.rate} € × ${WEEKS} Wo. × ${e.conf} % Konfidenz = ${eur(r.gross)}<br>
+      <div class="calc">${idea.persons} Pers. × ${de(idea.hours)} h × ${e.save} % × ${idea.rate} € × ${WEEKS} Wo. = ${eur(r.gross)}<br>
         − ${eur(r.oneTime)} Umsetzung ${e.running < 0 ? `+ ${eur(-e.running)} eingespart` : `− ${eur(e.running)} laufend`} = <strong>${eur(r.net)}</strong></div>
     </div>
   </div>`;
