@@ -96,6 +96,11 @@
   .detail h4 { margin: 0 0 4px; font-size: 13px; }
   .edit { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
   .edit input { padding: 7px 9px; }
+  .costs { width: 100%; border-collapse: collapse; font-size: 13.5px; color: var(--text-2); margin-bottom: 12px; }
+  .costs td { padding: 3px 0; vertical-align: top; }
+  .costs td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; font-variant-numeric: tabular-nums; }
+  .costs tr.grp td { color: var(--text); font-weight: 600; padding-top: 6px; }
+  .costs tr:not(.grp) td:first-child { padding-left: 12px; }
   .calc { font-size: 13px; color: var(--muted); margin-top: 10px; }
   .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -224,7 +229,8 @@ function sanitize(raw) {
     effort: clamp(num(raw.effort, 0), 0, 100000),
     running: clamp(num(raw.running, 0), -1e7, 1e7),
     why: String(raw.why || "").trim(),
-    costs: String(raw.costs || "").trim(),
+    oneItems: (Array.isArray(raw.oneItems) ? raw.oneItems : []).map((x) => ({ name: String(x.name || "").trim(), hours: clamp(num(x.hours, 0), 0, 10000) })).filter((x) => x.name),
+    runItems: (Array.isArray(raw.runItems) ? raw.runItems : []).map((x) => ({ name: String(x.name || "").trim(), eur: clamp(num(x.eur, 0), -1e6, 1e6) })).filter((x) => x.name),
     risk: String(raw.risk || "").trim()
   };
 }
@@ -249,13 +255,18 @@ const TOOL = {
           properties: {
             id: { type: "string" },
             ersparnis_prozent: { type: "integer", description: "Realistisch erwarteter Anteil der heutigen Zeit, der wegfällt (0–100), Unsicherheit bereits eingepreist" },
-            umsetzungsaufwand_stunden: { type: "number", description: "Einmaliger Aufwand in Arbeitsstunden" },
-            laufende_kosten_eur_pro_jahr: { type: "number", description: "Lizenzen, API-Kosten, Pflege. Negativ = Einsparung" },
+            umsetzung: {
+              type: "array", description: "Einmalige Arbeitsschritte der Einführung",
+              items: { type: "object", properties: { posten: { type: "string" }, stunden: { type: "number" } }, required: ["posten", "stunden"] }
+            },
+            laufende_kosten: {
+              type: "array", description: "Jährliche Kosten; negative Beträge = Einsparung",
+              items: { type: "object", properties: { posten: { type: "string" }, eur_pro_jahr: { type: "number" } }, required: ["posten", "eur_pro_jahr"] }
+            },
             begruendung: { type: "string", description: "2–3 kurze Sätze" },
-            kosten: { type: "string", description: "Eine kurze Zeile: woraus Umsetzungsaufwand und laufende Kosten bestehen, mit Beträgen" },
             risiken: { type: "string", description: "1 kurzer Satz" }
           },
-          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "begruendung", "kosten", "risiken"]
+          required: ["id", "ersparnis_prozent", "umsetzung", "laufende_kosten", "begruendung", "risiken"]
         }
       }
     },
@@ -268,15 +279,15 @@ function buildPrompt(ideas) {
 
 Schätze für jede Idee:
 - ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt. Preise die Unsicherheit direkt ein: je vager oder riskanter die Idee, desto niedriger der Wert.
-- umsetzungsaufwand_stunden: einmaliger Aufwand für Einführung inkl. Abstimmung. Organisatorisches ist günstig, Software-Integration teuer.
-- laufende_kosten_eur_pro_jahr: Lizenzen, API-Kosten, Pflege (negativ, wenn Kosten wegfallen). Rechne von unten nach oben (Nutzer × Preis pro Monat × 12, Pflegestunden × Stundensatz) statt runde Pauschalen zu schätzen. Orientierung: KI-Assistenz-Add-ons für Helpdesks kosten ca. 25–50 € pro Nutzer und Monat, typische SaaS-Tools 5–30 € pro Nutzer und Monat; Pflege meist nur wenige Stunden pro Monat.
-- kosten: eine kurze Zeile, woraus Umsetzung und laufende Kosten bestehen, mit Beträgen. Beispiel: "Umsetzung: Einrichtung 40 h, Schulung 20 h · Laufend: Lizenz ca. 3.000 €, Pflege ca. 1.000 €". Nenne auch, ob du von einem fertigen Add-on oder einer Eigenentwicklung ausgehst, falls relevant.
+- umsetzung: Liste der einmaligen Arbeitsschritte mit Stunden (2–4 Posten). Organisatorisches ist günstig, Software-Integration teuer.
+- laufende_kosten: Liste der jährlichen Kosten in Euro (0–3 Posten; leer, wenn keine). Rechne von unten nach oben (Nutzer × Preis pro Monat × 12; Pflegestunden × Stundensatz der Idee). Orientierung: KI-Assistenz-Add-ons für Helpdesks ca. 25–50 € pro Nutzer und Monat, typische SaaS-Tools 5–30 € pro Nutzer und Monat, Pflege meist wenige Stunden pro Monat. Wegfallende Kosten als negativer Betrag.
+- Postennamen: kurz (2–5 Wörter), optional mit Rechenweg in Klammern, z. B. "KI-Add-on (10 × 40 € × 12)". Keine Überlegungen, Korrekturen oder Auslassungspunkte im Text.
 - begruendung (2–3 kurze Sätze) und risiken (1 Satz), auf Deutsch und konkret.
 
 Sei konservativ, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
 
 Ideen:
-${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""} | ${i.persons} Personen, heute ${de(i.hours)} Std./Woche pro Person`).join("\n")}
+${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""} | ${i.persons} Personen, heute ${de(i.hours)} Std./Woche pro Person, Stundensatz ${i.rate} €`).join("\n")}
 
 Rufe unbedingt das Tool "${TOOL.name}" mit genau einer Bewertung pro Idee auf. Antworte nicht mit Fließtext.`;
 }
@@ -329,10 +340,16 @@ function extractJson(text) {
   try { return JSON.parse(text.slice(a, b + 1)); } catch (e) { return null; }
 }
 
-const fromAI = (b) => sanitize({
-  save: b.ersparnis_prozent, effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr,
-  why: b.begruendung, costs: b.kosten, risk: b.risiken
-});
+function fromAI(b) {
+  const oneItems = (b.umsetzung || []).map((x) => ({ name: x.posten, hours: x.stunden }));
+  const runItems = (b.laufende_kosten || []).map((x) => ({ name: x.posten, eur: x.eur_pro_jahr }));
+  return sanitize({
+    save: b.ersparnis_prozent,
+    effort: oneItems.reduce((s, x) => s + num(x.hours, 0), 0),     // Summen rechnet das Programm, nicht die KI
+    running: runItems.reduce((s, x) => s + num(x.eur, 0), 0),
+    oneItems, runItems, why: b.begruendung, risk: b.risiken
+  });
+}
 
 async function evaluate() {
   if (!state.ideas.length) return setStatus("Bitte zuerst Ideen erfassen.", true);
@@ -393,13 +410,29 @@ function renderResults() {
   }).join("");
 }
 
+function costTable(idea) {
+  const e = idea.eval;
+  if (!e.oneItems?.length && !e.runItems?.length) return "";
+  const row = (name, val) => `<tr><td>${esc(name)}</td><td>${val}</td></tr>`;
+  let html = '<h4>Kosten</h4><table class="costs">';
+  if (e.oneItems?.length) {
+    html += `<tr class="grp"><td>Einmalig</td><td>${de(e.effort)} h · ${eur(e.effort * idea.rate)}</td></tr>`;
+    html += e.oneItems.map((x) => row(x.name, de(x.hours) + " h")).join("");
+  }
+  if (e.runItems?.length) {
+    html += `<tr class="grp"><td>Pro Jahr</td><td>${eur(e.running)}</td></tr>`;
+    html += e.runItems.map((x) => row(x.name, eur(x.eur))).join("");
+  }
+  return html + "</table>";
+}
+
 function detail(idea, r) {
   const e = idea.eval;
   const f = (k, label, step) => `<div><label>${label}</label><input type="number" step="${step}" value="${e[k]}" data-edit="${k}" data-id="${idea.id}"></div>`;
   return `<div class="detail">
     <div>
       <h4>Begründung</h4><p>${esc(e.why) || "–"}</p>
-      ${e.costs ? `<h4>Kosten</h4><p>${esc(e.costs)}</p>` : ""}
+      ${costTable(idea)}
       ${e.risk ? `<h4>Risiko</h4><p>${esc(e.risk)}</p>` : ""}
     </div>
     <div>
@@ -472,6 +505,8 @@ $("resultBody").addEventListener("change", (ev) => {
   const k = ev.target.dataset.edit; if (!k) return;
   const idea = state.ideas.find((i) => i.id === ev.target.dataset.id);
   idea.eval[k] = num(ev.target.value, 0);
+  if (k === "effort") idea.eval.oneItems = [];    // manuell überschrieben -> KI-Aufschlüsselung passt nicht mehr
+  if (k === "running") idea.eval.runItems = [];
   idea.eval = sanitize(idea.eval);
   saveState(); renderResults();
 });
