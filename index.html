@@ -408,7 +408,7 @@ function detail(idea, r) {
         ${f("running", "Laufend €/Jahr", 100)}
       </div>
       <div class="calc">${idea.persons} Pers. × ${de(idea.hours)} h × ${e.save} % × ${idea.rate} € × ${WEEKS} Wo. × ${e.conf} % Konfidenz = ${eur(r.gross)}<br>
-        − ${eur(r.oneTime)} Umsetzung − ${eur(e.running)} laufend = <strong>${eur(r.net)}</strong></div>
+        − ${eur(r.oneTime)} Umsetzung ${e.running < 0 ? `+ ${eur(-e.running)} eingespart` : `− ${eur(e.running)} laufend`} = <strong>${eur(r.net)}</strong></div>
     </div>
   </div>`;
 }
