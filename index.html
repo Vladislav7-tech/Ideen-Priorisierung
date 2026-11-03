@@ -13,7 +13,6 @@
     --text-2: #5e5d59;
     --muted: #9a9993;
     --accent: #2a78d6;
-    --accent-soft: #e8f0fb;
     --neg: #c63b3a;
     --radius: 14px;
   }
@@ -24,23 +23,18 @@
     font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   }
   .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 64px; display: grid; gap: 20px; }
-  h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: -0.02em; }
-  .grid-2 { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
-  @media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+  h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; }
-  h2 { font-size: 16px; margin: 0 0 16px; }
-  label { display: block; font-size: 13px; color: var(--text-2); margin-bottom: 5px; }
-  input, textarea {
+  h2 { font-size: 16px; margin: 0 0 14px; }
+  label { display: block; font-size: 12.5px; color: var(--text-2); margin-bottom: 4px; }
+  input {
     width: 100%; font: inherit; color: var(--text); background: #fff;
-    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px;
   }
-  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
-  textarea { resize: vertical; min-height: 76px; }
-  .fields { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); }
-  .fields .full { grid-column: 1 / -1; }
-  @media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+  input[type=number] { font-variant-numeric: tabular-nums; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
   button {
-    font: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 10px 16px;
+    font: inherit; font-weight: 600; cursor: pointer; border-radius: 10px; padding: 9px 16px;
     border: 1px solid var(--border); background: #fff; color: var(--text);
   }
   button:hover { background: #f2f1ed; }
@@ -51,31 +45,43 @@
   button.ghost:hover { color: var(--text); background: none; }
   button:disabled { opacity: .6; cursor: wait; }
 
-  .add { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-  .add .desc { grid-column: 1 / -1; }
-  .ideas { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 6px; max-height: 300px; overflow: auto; }
-  .ideas li {
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-    border-radius: 10px; padding: 8px 6px 8px 12px; background: #f8f8f5;
+  /* Ideen: eine Zeile pro Idee */
+  .idea-grid { display: grid; grid-template-columns: 1fr 96px 96px 110px 36px; gap: 8px; align-items: end; }
+  .idea-head { font-size: 12.5px; color: var(--text-2); padding: 0 2px 2px; }
+  .idea-head span:nth-child(n+2) { text-align: left; }
+  .ideas { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  .ideas li .title { padding: 9px 2px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ideas li .title small { display: block; font-weight: 400; font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; }
+  .ideas li input { padding: 7px 9px; }
+  .del { color: var(--muted); font-size: 18px; padding: 4px; }
+  .del:hover { color: var(--neg); }
+  .new { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 14px; }
+  .new .desc { margin-top: 8px; }
+  .new button { padding: 9px 0; }
+  .foot { display: flex; justify-content: space-between; margin-top: 10px; }
+  .empty-ideas { color: var(--muted); padding: 6px 2px 2px; margin: 0; }
+  @media (max-width: 640px) {
+    .idea-grid { grid-template-columns: 1fr 1fr 1fr 36px; }
+    .idea-grid > :first-child { grid-column: 1 / -1; }
+    .idea-head { display: none; }
+    .ideas li { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
   }
-  .ideas .del { color: var(--muted); font-size: 16px; padding: 2px 8px; }
-  .ideas .del:hover { color: var(--neg); }
-  .ideas-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .mobile-label { display: none; }
+  @media (max-width: 640px) { .mobile-label { display: block; } }
 
-  .run { display: grid; justify-items: center; gap: 10px; padding: 4px 0; }
+  .run { display: grid; justify-items: center; gap: 10px; }
   .key-row { display: flex; gap: 8px; width: min(460px, 100%); }
   .key-row input { flex: 1; }
-  .key-saved { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+  .key-saved { font-size: 13px; color: var(--muted); }
   .status { min-height: 20px; font-size: 14px; color: var(--text-2); text-align: center; }
   .status.error { color: var(--neg); }
 
   .result-row { display: grid; grid-template-columns: 36px 1fr 220px; gap: 14px; align-items: center; padding: 14px 4px; border-top: 1px solid var(--border); cursor: pointer; }
-  .result-row:first-of-type { border-top: none; }
-  .result-row:hover .title { color: var(--accent); }
+  .result-row:first-child { border-top: none; }
+  .result-row:hover .rtitle { color: var(--accent); }
   .rank { font-weight: 700; font-size: 17px; color: var(--muted); text-align: center; }
   .result-row.top .rank { color: var(--text); }
-  .title { font-weight: 600; }
-  .sub { font-size: 13px; color: var(--muted); }
+  .rtitle { font-weight: 600; }
   .value { display: grid; gap: 6px; justify-items: end; }
   .value strong { font-variant-numeric: tabular-nums; font-size: 16px; }
   .bar { width: 100%; height: 6px; border-radius: 3px; background: #f0efea; overflow: hidden; }
@@ -83,14 +89,13 @@
   .neg { color: var(--neg); }
   @media (max-width: 560px) { .result-row { grid-template-columns: 28px 1fr 120px; } }
 
-  .detail { padding: 4px 4px 18px 54px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; cursor: default; }
+  .detail { padding: 2px 4px 18px 54px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   @media (max-width: 720px) { .detail { grid-template-columns: 1fr; padding-left: 4px; } }
   .detail p { margin: 0 0 10px; color: var(--text-2); }
   .detail h4 { margin: 0 0 4px; font-size: 13px; }
-  .edit { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .edit input { padding: 7px 10px; }
+  .edit { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+  .edit input { padding: 7px 9px; }
   .calc { font-size: 13px; color: var(--muted); margin-top: 10px; }
-  .empty { color: var(--muted); text-align: center; padding: 24px 0; margin: 0; }
   .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
   @keyframes spin { to { transform: rotate(360deg); } }
 </style>
@@ -99,31 +104,30 @@
 <div class="wrap">
   <h1>Ideen-Priorisierer</h1>
 
-  <div class="grid-2">
-    <section class="card">
-      <h2>Team</h2>
-      <div class="fields">
-        <div><label for="rate">Stundensatz (€)</label><input id="rate" type="number" min="1"></div>
-        <div><label for="teamSize">Personen</label><input id="teamSize" type="number" min="1"></div>
-        <div><label for="weeks">Wochen / Jahr</label><input id="weeks" type="number" min="1" max="52"></div>
-        <div class="full"><label for="context">Wie arbeitet das Team?</label><textarea id="context" rows="5"></textarea></div>
-      </div>
-    </section>
+  <section class="card">
+    <h2>Ideen</h2>
+    <div class="idea-grid idea-head" id="ideaHead">
+      <span>Idee</span><span>Personen</span><span>€ / Stunde</span><span>Std. / Woche</span><span></span>
+    </div>
+    <ul id="ideaList" class="ideas"></ul>
+    <p id="noIdeas" class="empty-ideas">Noch keine Ideen.</p>
 
-    <section class="card">
-      <h2>Ideen</h2>
-      <form id="ideaForm" class="add">
-        <input id="ideaTitle" placeholder="Neue Idee" required>
-        <button class="primary" type="submit">+</button>
-        <input id="ideaDesc" class="desc" placeholder="Beschreibung (optional)">
-      </form>
-      <ul id="ideaList" class="ideas"></ul>
-      <div class="ideas-foot">
-        <button id="loadExamples" type="button" class="ghost">Beispiele laden</button>
-        <button id="clearIdeas" type="button" class="ghost">Alle löschen</button>
+    <form id="ideaForm" class="new">
+      <div class="idea-grid">
+        <div><input id="nTitle" placeholder="Neue Idee" required></div>
+        <div><label class="mobile-label">Personen</label><input id="nPersons" type="number" min="1" value="10" title="Wie viele Personen sind betroffen?"></div>
+        <div><label class="mobile-label">€ / Stunde</label><input id="nRate" type="number" min="1" value="50" title="Kosten pro Arbeitsstunde"></div>
+        <div><label class="mobile-label">Std. / Woche</label><input id="nHours" type="number" min="0" step="0.5" value="2" title="Wie viele Stunden pro Woche verbringt eine Person heute mit dieser Aufgabe?"></div>
+        <div><button class="primary" type="submit" style="width:100%" aria-label="Idee hinzufügen">+</button></div>
       </div>
-    </section>
-  </div>
+      <input id="nDesc" class="desc" placeholder="Beschreibung (optional)">
+    </form>
+
+    <div class="foot">
+      <button id="loadExamples" type="button" class="ghost">Beispiele laden</button>
+      <button id="clearIdeas" type="button" class="ghost">Alle löschen</button>
+    </div>
+  </section>
 
   <div class="run">
     <div class="key-row" id="keyRow">
@@ -147,56 +151,52 @@
 "use strict";
 
 /* ---------- Konfiguration ---------- */
-const STORE_KEY = "ideen-priorisierer-v2";
+const STORE_KEY = "ideen-priorisierer-v3";
 const KEY_STORE = "ideen-priorisierer-key";
+const WEEKS = 46;   // Arbeitswochen pro Jahr (nach Urlaub/Feiertagen)
 const MODELS = { anthropic: "claude-sonnet-5-5", openai: "gpt-5.4-mini" };
 const providerOf = (key) => (key.startsWith("sk-ant-") ? "anthropic" : "openai");
 
+/* Beispiel: Service-Team eines Mobilfunkanbieters.
+   [Titel, Beschreibung, Personen, €/h, Stunden pro Woche und Person heute] */
 const EXAMPLE_IDEAS = [
-  ["Meeting-Zeiten reduzieren", "Weniger und kürzere Meetings, klare Agenda, feste meetingfreie Zeiten"],
-  ["Wissensdatenbank verbessern", "Zentrale, durchsuchbare Ablage für Prozesse und Lösungen"],
-  ["Onboarding automatisieren", "Checklisten, Zugänge und Einarbeitungsmaterial automatisch bereitstellen"],
-  ["AI-Assistent für Support-Anfragen", "KI schlägt Antworten auf häufige Kundenanfragen vor"],
-  ["Automatische Dokumentation", "Ticket-Notizen, Gesprächszusammenfassungen und Meeting-Protokolle automatisch erstellen"],
-  ["Tool-Landschaft vereinfachen", "Überschneidende Tools zusammenführen, Lizenzen reduzieren"],
-  ["Automatische Wochenreports", "KPIs automatisch aus den Systemen ziehen statt manuell in Excel"],
-  ["Self-Service-FAQ für Kunden", "Häufige Fragen online beantworten, bevor ein Ticket entsteht"],
-  ["Textbausteine für Tickets", "Abgestimmte Vorlagen für wiederkehrende Antworten"],
-  ["Zentrale Projektübersicht", "Ein Dashboard für Status, Verantwortliche und Termine"]
+  ["Meeting-Zeiten reduzieren", "Weniger und kürzere Meetings, klare Agenda", 40, 50, 4],
+  ["Wissensdatenbank verbessern", "Zentrale, durchsuchbare Ablage für Prozesse und Lösungen", 40, 50, 2],
+  ["Onboarding automatisieren", "Checklisten, Zugänge und Material automatisch bereitstellen", 5, 50, 6],
+  ["AI-Assistent für Support-Anfragen", "KI schlägt Antworten auf häufige Kundenanfragen vor", 25, 45, 20],
+  ["Automatische Dokumentation", "Ticket-Notizen und Gesprächszusammenfassungen automatisch erstellen", 25, 45, 4],
+  ["Tool-Landschaft vereinfachen", "Überschneidende Tools zusammenführen", 40, 50, 2],
+  ["Automatische Wochenreports", "KPIs automatisch aus den Systemen statt manuell in Excel", 3, 55, 4],
+  ["Self-Service-FAQ für Kunden", "Häufige Fragen online beantworten, bevor ein Ticket entsteht", 25, 45, 20],
+  ["Textbausteine für Tickets", "Vorlagen für wiederkehrende Antworten", 25, 45, 10],
+  ["Zentrale Projektübersicht", "Ein Dashboard für Status, Verantwortliche und Termine", 8, 60, 2]
 ];
 
-/* Interner Fallback, falls die KI nicht erreichbar ist (z. B. kein Internet bei der Demo). share = Anteil des Teams */
+/* Interner Fallback, falls die KI nicht erreichbar ist (z. B. kein Internet bei der Demo). */
 const FALLBACK_RULES = [
-  { kw: ["meeting"], share: 1.0, h: 1.5, effort: 16, run: 0, conf: 60, why: "Kürzere und seltenere Meetings sparen direkt Arbeitszeit bei allen. Die Umsetzung braucht vor allem Absprachen." },
-  { kw: ["wissen", "wiki"], share: 1.0, h: 1.0, effort: 120, run: 1500, conf: 50, why: "Weniger Suchzeit und Rückfragen, wenn Lösungen zentral auffindbar sind – sofern die Inhalte gepflegt werden." },
-  { kw: ["onboarding", "einarbeitung"], share: 0.15, h: 2.0, effort: 80, run: 0, conf: 55, why: "Neue Mitarbeitende und ihre Paten sparen Zeit bei Zugängen und Standardfragen." },
-  { kw: ["support", "assistent", "anfrage"], share: 0.6, h: 3.0, effort: 200, run: 6000, conf: 45, why: "Antwortvorschläge verkürzen die Bearbeitung wiederkehrender Anfragen deutlich, kosten aber Integration und API-Gebühren." },
-  { kw: ["dokument", "protokoll", "notiz"], share: 0.6, h: 1.5, effort: 60, run: 2400, conf: 50, why: "Ticket-Notizen und Protokolle entstehen automatisch statt manuell." },
-  { kw: ["tool", "lizenz"], share: 1.0, h: 0.5, effort: 160, run: -3000, conf: 40, why: "Weniger Kontextwechsel und geringere Lizenzkosten, aber aufwendige Migration." },
-  { kw: ["report", "bericht", "kpi"], share: 0.1, h: 3.0, effort: 40, run: 0, conf: 70, why: "Manuelle Reports sind gut automatisierbar; wenige Personen sparen viel Zeit." },
-  { kw: ["faq", "self-service"], share: 0.6, h: 1.5, effort: 60, run: 0, conf: 55, why: "Jede Anfrage, die gar nicht erst entsteht, spart Bearbeitungszeit." },
-  { kw: ["textbaustein", "vorlage"], share: 0.6, h: 1.0, effort: 16, run: 0, conf: 70, why: "Geringer Aufwand, sofort wirksam: Standardantworten müssen nicht neu formuliert werden." },
-  { kw: ["projekt", "dashboard", "übersicht"], share: 0.3, h: 1.0, effort: 40, run: 600, conf: 50, why: "Weniger Statusabfragen, weil der Stand jederzeit sichtbar ist." }
+  { kw: ["meeting"], save: 30, effort: 16, run: 0, conf: 60, why: "Kürzere und seltenere Meetings sparen direkt Zeit bei allen Teilnehmenden. Die Umsetzung braucht vor allem Absprachen." },
+  { kw: ["wissen", "wiki"], save: 40, effort: 120, run: 1500, conf: 50, why: "Weniger Suchzeit und Rückfragen, wenn Lösungen zentral auffindbar sind – sofern die Inhalte gepflegt werden." },
+  { kw: ["onboarding", "einarbeitung"], save: 35, effort: 80, run: 0, conf: 55, why: "Zugänge und Standardfragen kosten neue Mitarbeitende und Paten weniger Zeit." },
+  { kw: ["support", "assistent", "anfrage"], save: 20, effort: 200, run: 6000, conf: 45, why: "Antwortvorschläge verkürzen die Bearbeitung wiederkehrender Anfragen, kosten aber Integration und API-Gebühren." },
+  { kw: ["dokument", "protokoll", "notiz"], save: 50, effort: 60, run: 2400, conf: 50, why: "Notizen und Zusammenfassungen entstehen automatisch statt manuell." },
+  { kw: ["tool", "lizenz"], save: 25, effort: 160, run: -3000, conf: 40, why: "Weniger Kontextwechsel und Lizenzkosten, aber aufwendige Migration." },
+  { kw: ["report", "bericht", "kpi"], save: 75, effort: 40, run: 0, conf: 70, why: "Manuelle Reports lassen sich gut automatisieren." },
+  { kw: ["faq", "self-service"], save: 10, effort: 60, run: 0, conf: 55, why: "Jede Anfrage, die gar nicht erst entsteht, spart Bearbeitungszeit." },
+  { kw: ["textbaustein", "vorlage"], save: 15, effort: 16, run: 0, conf: 70, why: "Geringer Aufwand, sofort wirksam: Standardantworten müssen nicht neu formuliert werden." },
+  { kw: ["projekt", "dashboard", "übersicht"], save: 40, effort: 40, run: 600, conf: 50, why: "Weniger Statusabfragen, weil der Stand jederzeit sichtbar ist." }
 ];
-const FALLBACK_DEFAULT = { share: 0.3, h: 0.5, effort: 40, run: 0, conf: 30, why: "Vorsichtige Standardschätzung – bitte Werte prüfen." };
+const FALLBACK_DEFAULT = { save: 20, effort: 40, run: 0, conf: 30, why: "Vorsichtige Standardschätzung – bitte Werte prüfen." };
 
 /* ---------- State ---------- */
 let state = loadState();
 let openId = null;
 
-function defaultState() {
-  return {
-    team: { rate: 50, size: 40, weeks: 46,
-      context: "Kundenservice- und Operations-Team eines Mobilfunkanbieters. Viel Ticketbearbeitung, wöchentliche Abstimmungsmeetings, Reports in Excel, viele verschiedene Tools." },
-    ideas: []
-  };
-}
 function loadState() {
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && s.team && Array.isArray(s.ideas)) return s;
+    if (s && Array.isArray(s.ideas)) return s;
   } catch (e) { /* kein Speicher verfügbar */ }
-  return defaultState();
+  return { ideas: [] };
 }
 function saveState() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} }
 function getKey() { try { return localStorage.getItem(KEY_STORE) || ""; } catch (e) { return ""; } }
@@ -208,23 +208,21 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const eur = (n) => (n < 0 ? "−" : "") + Math.abs(Math.round(n)).toLocaleString("de-DE") + " €";
 const num = (v, d = 0) => { const n = parseFloat(String(v).replace(",", ".")); return Number.isFinite(n) ? n : d; };
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const de = (n) => String(n).replace(".", ",");
 
 /* ---------- Berechnung ----------
-   Nutzen pro Jahr = eingesparte Arbeitszeit in € (gewichtet mit Konfidenz)
-                     − Umsetzungsaufwand − laufende Kosten               */
-function calc(e) {
-  const t = state.team;
-  const gross = e.persons * e.hours * t.rate * t.weeks * (e.conf / 100);
-  const oneTime = e.effort * t.rate;
+   Zeitersparnis/Jahr = Personen × Std./Woche heute × Ersparnis % × €/h × 46 Wochen × Konfidenz
+   Nutzen/Jahr        = Zeitersparnis − Umsetzungsaufwand (h × €/h) − laufende Kosten          */
+function calc(idea) {
+  const e = idea.eval;
+  const gross = idea.persons * idea.hours * (e.save / 100) * idea.rate * WEEKS * (e.conf / 100);
+  const oneTime = e.effort * idea.rate;
   return { gross, oneTime, net: gross - oneTime - e.running };
 }
 
-/* Plausibilisierung der KI-Werte */
 function sanitize(raw) {
-  const size = state.team.size;
   return {
-    persons: clamp(Math.round(num(raw.persons, 1)), 0, size),
-    hours: clamp(num(raw.hours, 0), 0, 10),
+    save: clamp(Math.round(num(raw.save, 0)), 0, 100),
     effort: clamp(num(raw.effort, 0), 0, 100000),
     running: clamp(num(raw.running, 0), -1e7, 1e7),
     conf: clamp(Math.round(num(raw.conf, 50)), 10, 100),
@@ -236,7 +234,7 @@ function sanitize(raw) {
 function fallbackEvaluate(idea) {
   const text = (idea.title + " " + (idea.desc || "")).toLowerCase();
   const r = FALLBACK_RULES.find((x) => x.kw.some((k) => text.includes(k))) || FALLBACK_DEFAULT;
-  return sanitize({ persons: Math.max(1, Math.round(r.share * state.team.size)), hours: r.h, effort: r.effort, running: r.run, conf: r.conf, why: r.why });
+  return sanitize({ save: r.save, effort: r.effort, running: r.run, conf: r.conf, why: r.why });
 }
 
 /* ---------- KI ---------- */
@@ -252,16 +250,14 @@ const TOOL = {
           type: "object",
           properties: {
             id: { type: "string" },
-            betroffene_personen: { type: "integer" },
-            ersparnis_stunden_pro_woche_pro_person: { type: "number" },
-            umsetzungsaufwand_stunden: { type: "number" },
-            laufende_kosten_eur_pro_jahr: { type: "number", description: "Negativ = Einsparung" },
+            ersparnis_prozent: { type: "integer", description: "Anteil der heutigen Zeit für diese Aufgabe, der durch die Idee wegfällt (0–100)" },
+            umsetzungsaufwand_stunden: { type: "number", description: "Einmaliger Aufwand in Arbeitsstunden" },
+            laufende_kosten_eur_pro_jahr: { type: "number", description: "Lizenzen, API-Kosten, Pflege. Negativ = Einsparung" },
             konfidenz_prozent: { type: "integer", description: "10–100" },
             begruendung: { type: "string", description: "2–3 kurze Sätze" },
             risiken: { type: "string", description: "1 kurzer Satz" }
           },
-          required: ["id", "betroffene_personen", "ersparnis_stunden_pro_woche_pro_person", "umsetzungsaufwand_stunden",
-                     "laufende_kosten_eur_pro_jahr", "konfidenz_prozent", "begruendung", "risiken"]
+          required: ["id", "ersparnis_prozent", "umsetzungsaufwand_stunden", "laufende_kosten_eur_pro_jahr", "konfidenz_prozent", "begruendung", "risiken"]
         }
       }
     },
@@ -270,23 +266,19 @@ const TOOL = {
 };
 
 function buildPrompt(ideas) {
-  const t = state.team;
-  return `Du bist ein nüchterner Prozess- und Wirtschaftlichkeitsanalyst. Schätze für jede Idee realistische Werte, damit das Team sie nach wirtschaftlichem Nutzen priorisieren kann.
+  return `Du bist ein nüchterner Prozess- und Wirtschaftlichkeitsanalyst in einem Unternehmen. Ein Team hat Verbesserungsideen gesammelt. Zu jeder Idee ist angegeben, wie viele Personen betroffen sind und wie viele Stunden pro Woche eine Person HEUTE mit der betroffenen Aufgabe verbringt.
 
-Team: ${t.size} Personen, Stundensatz ${t.rate} €/h, ${t.weeks} Arbeitswochen pro Jahr.
-Kontext: ${t.context || "keine Angabe"}
-
-Regeln:
-- Sei konservativ. Typische Ersparnis: 0,25–3 Stunden pro Person und Woche; mehr nur mit klarer Begründung.
-- betroffene_personen ≤ ${t.size}; zähle nur Personen, deren Arbeit sich wirklich verändert.
-- umsetzungsaufwand_stunden: einmaliger Aufwand inkl. Abstimmung. Organisatorisches ist günstig, Software-Integration teuer.
+Schätze für jede Idee:
+- ersparnis_prozent: welcher Anteil dieser heutigen Zeit durch die Idee realistisch wegfällt.
+- umsetzungsaufwand_stunden: einmaliger Aufwand für Einführung inkl. Abstimmung. Organisatorisches ist günstig, Software-Integration teuer.
+- laufende_kosten_eur_pro_jahr: Lizenzen, API-Kosten, Pflege (negativ, wenn Kosten wegfallen).
 - konfidenz_prozent: 20–40 bei vagen Ideen, 70–90 bei klar messbaren.
-- Interpretiere jede Idee so, wie sie für genau dieses Team am sinnvollsten ist.
-- Bewerte alle Ideen im Vergleich zueinander.
-- Begründung und Risiken auf Deutsch, kurz und konkret.
+- begruendung (2–3 kurze Sätze) und risiken (1 Satz), auf Deutsch und konkret.
+
+Sei konservativ, interpretiere jede Idee so, wie sie in einem typischen Büro- oder Service-Team am sinnvollsten ist, und bewerte alle Ideen im Vergleich zueinander.
 
 Ideen:
-${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""}`).join("\n")}
+${ideas.map((i) => `- id: ${i.id} | ${i.title}${i.desc ? " – " + i.desc : ""} | ${i.persons} Personen, heute ${de(i.hours)} Std./Woche pro Person`).join("\n")}
 
 Rufe unbedingt das Tool "${TOOL.name}" mit genau einer Bewertung pro Idee auf. Antworte nicht mit Fließtext.`;
 }
@@ -340,8 +332,7 @@ function extractJson(text) {
 }
 
 const fromAI = (b) => sanitize({
-  persons: b.betroffene_personen, hours: b.ersparnis_stunden_pro_woche_pro_person,
-  effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr,
+  save: b.ersparnis_prozent, effort: b.umsetzungsaufwand_stunden, running: b.laufende_kosten_eur_pro_jahr,
   conf: b.konfidenz_prozent, why: b.begruendung, risk: b.risiken
 });
 
@@ -377,34 +368,35 @@ function setStatus(html, isError) { const s = $("status"); s.innerHTML = html; s
 /* ---------- Rendering ---------- */
 function renderIdeas() {
   const ul = $("ideaList");
-  ul.innerHTML = "";
-  state.ideas.forEach((i) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<span>${esc(i.title)}</span><button class="ghost del" aria-label="Idee löschen" data-del="${i.id}">×</button>`;
-    ul.appendChild(li);
-  });
+  ul.innerHTML = state.ideas.map((i) => `<li class="idea-grid">
+      <div class="title" title="${esc(i.desc || i.title)}">${esc(i.title)}${i.desc ? `<small>${esc(i.desc)}</small>` : ""}</div>
+      <div><label class="mobile-label">Personen</label><input type="number" min="1" value="${i.persons}" data-field="persons" data-id="${i.id}"></div>
+      <div><label class="mobile-label">€ / Stunde</label><input type="number" min="1" value="${i.rate}" data-field="rate" data-id="${i.id}"></div>
+      <div><label class="mobile-label">Std. / Woche</label><input type="number" min="0" step="0.5" value="${i.hours}" data-field="hours" data-id="${i.id}"></div>
+      <div><button type="button" class="ghost del" aria-label="Idee löschen" data-del="${i.id}">×</button></div>
+    </li>`).join("");
+  $("ideaHead").hidden = $("noIdeas").hidden = false;
+  $("ideaHead").hidden = !state.ideas.length;
+  $("noIdeas").hidden = !!state.ideas.length;
 }
 
 function renderResults() {
-  const list = state.ideas.filter((i) => i.eval).map((i) => ({ idea: i, r: calc(i.eval) })).sort((a, b) => b.r.net - a.r.net);
+  const list = state.ideas.filter((i) => i.eval).map((i) => ({ idea: i, r: calc(i) })).sort((a, b) => b.r.net - a.r.net);
   $("results").hidden = !list.length;
   if (!list.length) return;
   const max = Math.max(...list.map((x) => x.r.net), 1);
-  let html = "";
-  list.forEach(({ idea, r }, idx) => {
+  $("resultBody").innerHTML = list.map(({ idea, r }, idx) => {
     const w = r.net > 0 ? Math.max(2, (r.net / max) * 100) : 0;
-    html += `<div class="result-row${idx < 3 ? " top" : ""}" data-open="${idea.id}">
-      <div class="rank">${idx + 1}</div>
-      <div><div class="title">${esc(idea.title)}</div>${idea.desc ? `<div class="sub">${esc(idea.desc)}</div>` : ""}</div>
-      <div class="value"><strong class="${r.net < 0 ? "neg" : ""}">${eur(r.net)} / Jahr</strong><div class="bar"><i style="width:${w}%"></i></div></div>
-    </div>`;
-    if (openId === idea.id) html += detail(idea, r);
-  });
-  $("resultBody").innerHTML = html;
+    return `<div class="result-row${idx < 3 ? " top" : ""}" data-open="${idea.id}">
+        <div class="rank">${idx + 1}</div>
+        <div class="rtitle">${esc(idea.title)}</div>
+        <div class="value"><strong class="${r.net < 0 ? "neg" : ""}">${eur(r.net)} / Jahr</strong><div class="bar"><i style="width:${w}%"></i></div></div>
+      </div>` + (openId === idea.id ? detail(idea, r) : "");
+  }).join("");
 }
 
 function detail(idea, r) {
-  const e = idea.eval, t = state.team;
+  const e = idea.eval;
   const f = (k, label, step) => `<div><label>${label}</label><input type="number" step="${step}" value="${e[k]}" data-edit="${k}" data-id="${idea.id}"></div>`;
   return `<div class="detail">
     <div>
@@ -413,12 +405,12 @@ function detail(idea, r) {
     </div>
     <div>
       <div class="edit">
-        ${f("persons", "Personen", 1)}
-        ${f("hours", "Ersparnis h/Woche", 0.25)}
+        ${f("save", "Ersparnis %", 5)}
         ${f("effort", "Umsetzung (h)", 1)}
-        ${f("running", "Laufende Kosten €/Jahr", 100)}
+        ${f("running", "Laufend €/Jahr", 100)}
       </div>
-      <div class="calc">${eur(r.gross)} Zeitersparnis − ${eur(r.oneTime)} Umsetzung − ${eur(e.running)} laufend</div>
+      <div class="calc">${idea.persons} Pers. × ${de(idea.hours)} h × ${e.save} % × ${idea.rate} € × ${WEEKS} Wo. × ${e.conf} % Konfidenz = ${eur(r.gross)}<br>
+        − ${eur(r.oneTime)} Umsetzung − ${eur(e.running)} laufend = <strong>${eur(r.net)}</strong></div>
     </div>
   </div>`;
 }
@@ -430,22 +422,17 @@ function renderKey() {
 }
 
 /* ---------- Events ---------- */
-function bindTeam(id, prop, isNum) {
-  const el = $(id);
-  el.value = state.team[prop];
-  el.addEventListener("input", () => {
-    state.team[prop] = isNum ? Math.max(1, num(el.value, 1)) : el.value;
-    saveState(); renderResults();
-  });
-}
-bindTeam("rate", "rate", true); bindTeam("teamSize", "size", true); bindTeam("weeks", "weeks", true); bindTeam("context", "context", false);
-
 $("ideaForm").addEventListener("submit", (ev) => {
   ev.preventDefault();
-  const title = $("ideaTitle").value.trim();
+  const title = $("nTitle").value.trim();
   if (!title) return;
-  state.ideas.push({ id: uid(), title, desc: $("ideaDesc").value.trim() });
-  $("ideaTitle").value = ""; $("ideaDesc").value = ""; $("ideaTitle").focus();
+  state.ideas.push({
+    id: uid(), title, desc: $("nDesc").value.trim(),
+    persons: Math.max(1, Math.round(num($("nPersons").value, 1))),
+    rate: Math.max(1, num($("nRate").value, 50)),
+    hours: Math.max(0, num($("nHours").value, 0))
+  });
+  $("nTitle").value = ""; $("nDesc").value = ""; $("nTitle").focus();
   saveState(); renderIdeas();
 });
 $("ideaList").addEventListener("click", (ev) => {
@@ -453,9 +440,20 @@ $("ideaList").addEventListener("click", (ev) => {
   state.ideas = state.ideas.filter((i) => i.id !== id);
   saveState(); renderIdeas(); renderResults();
 });
+// "input" statt "change": Ergebnis aktualisiert sich beim Tippen, ein Klick danach geht nicht verloren
+$("ideaList").addEventListener("input", (ev) => {
+  const field = ev.target.dataset.field; if (!field) return;
+  const idea = state.ideas.find((i) => i.id === ev.target.dataset.id);
+  if (ev.target.value.trim() === "") return;
+  const v = num(ev.target.value, idea[field]);
+  idea[field] = field === "persons" ? Math.max(1, Math.round(v)) : Math.max(field === "hours" ? 0 : 1, v);
+  saveState(); renderResults();
+});
 $("loadExamples").addEventListener("click", () => {
   const existing = new Set(state.ideas.map((i) => i.title.toLowerCase()));
-  EXAMPLE_IDEAS.forEach(([title, desc]) => { if (!existing.has(title.toLowerCase())) state.ideas.push({ id: uid(), title, desc }); });
+  EXAMPLE_IDEAS.forEach(([title, desc, persons, rate, hours]) => {
+    if (!existing.has(title.toLowerCase())) state.ideas.push({ id: uid(), title, desc, persons, rate, hours });
+  });
   saveState(); renderIdeas();
 });
 $("clearIdeas").addEventListener("click", () => { state.ideas = []; saveState(); renderIdeas(); renderResults(); setStatus(""); });
